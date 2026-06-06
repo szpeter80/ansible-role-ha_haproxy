@@ -1,0 +1,83 @@
+---
+# tasks file for ha_haproxy
+
+- name: Install packages
+  ansible.builtin.dnf:
+    name: "{{ ha_haproxy_packages }}"
+    state: present
+
+- name: Set sysctl to bind non-local address
+  ansible.posix.sysctl:
+    name: net.ipv4.ip_nonlocal_bind
+    value: '1'
+    reload: true
+    sysctl_file: /etc/sysctl.d/98-haproxy.conf
+    state: present
+    sysctl_set: true
+
+- name: Setsebool permanent any connect
+  ansible.posix.seboolean:
+    name: haproxy_connect_any
+    state: true
+    persistent: true
+
+- name: Create conf.d for haproxy
+  ansible.builtin.file:
+    path: "/etc/haproxy/conf.d"
+    owner: root
+    group: root
+    mode: "0755"
+    state: directory
+
+- name: Deploy config for haproxy
+  ansible.builtin.template:
+    src: haproxy.cfg.j2
+    dest: "/etc/haproxy/haproxy.cfg"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Open firewall ports
+  ansible.posix.firewalld:
+    zone: public
+    state: enabled
+    immediate: true
+    permanent: true
+    port: "{{ ha_haproxy_fw_ports }}"
+
+#######################
+- name: Configure rsyslog for haproxy log file
+  ansible.builtin.lineinfile:
+    path: /etc/rsyslog.conf
+    insertafter: '^local7.*'
+    line: "{{ ha_haproxy_syslog_facility }}.*                       {{ ha_haproxy_logfile }}"
+    state: present
+
+- name: Restart rsyslog
+  ansible.builtin.systemd:
+    name: rsyslog
+    state: restarted
+#######################
+
+- name: Deploy keepalived config
+  ansible.builtin.template:
+    src: templates/keepalived.conf.j2
+    dest: /etc/keepalived/keepalived.conf
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Enable and start keepalived
+  ansible.builtin.systemd:
+    name: keepalived
+    state: started
+    enabled: true
+
+- name: Enable and start haproxy
+  ansible.builtin.systemd:
+    name: haproxy
+    state: started
+    enabled: true
+
+
+

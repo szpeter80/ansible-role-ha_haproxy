@@ -1,0 +1,21 @@
+---
+# defaults file for ha_haproxy
+
+# Set this to true in exactly of one of the 
+ha_haproxy_is_primary: false
+
+ha_haproxy_vip: ""    # virtual ip for incoming traffic
+ha_haproxy_vrrp_pass: 'dummy'
+ha_haproxy_syslog_facility: "local2"
+ha_haproxy_logfile: /var/log/haproxy.log
+
+ha_haproxy_stat_port: 1936
+ha_haproxy_stat_uri: "/stats"
+
+ha_haproxy_fw_ports:
+  - "{{ ha_haproxy_stat_port }}/tcp"    # haproxy stat
+  - "80/tcp"      # http
+  - "443/tcp"     # https
+  - 6443/tcp    # Kubernetes API
+  - 22623/tcp    # Machine config server
+

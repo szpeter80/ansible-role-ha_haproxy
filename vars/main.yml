@@ -1,0 +1,6 @@
+---
+# vars file for ha_haproxy
+
+ha_haproxy_packages:
+  - haproxy
+  - keepalived

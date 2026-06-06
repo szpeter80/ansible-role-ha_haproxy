@@ -1,0 +1,102 @@
+global
+    log         127.0.0.1 {{ ha_haproxy_syslog_facility }}
+
+    chroot      /var/lib/haproxy
+    pidfile     /var/run/haproxy.pid
+    maxconn     100000
+    user        haproxy
+    group       haproxy
+    daemon
+
+    # turn on stats unix socket
+    stats socket /var/lib/haproxy/stats
+
+    # utilize system-wide crypto-policies
+    ssl-default-bind-ciphers PROFILE=SYSTEM
+    ssl-default-server-ciphers PROFILE=SYSTEM
+
+#---------------------------------------------------------------------
+# defaults for every 'listen' and 'backend' 
+#---------------------------------------------------------------------
+defaults
+    mode                    http
+    log                     global
+    option                  httplog
+    option                  dontlognull
+    option http-server-close
+    option                  redispatch
+
+    retries                 3
+
+    timeout http-request    10s
+    timeout queue           1m
+    timeout connect         10s
+    timeout client          1m
+    timeout server          1m
+    timeout http-keep-alive 10s
+    timeout check           10s
+    maxconn                 100000
+
+resolvers haproxy_dns
+    parse-resolv-conf
+    # allow larger DNS payloads
+    accepted_payload_size 65000 
+
+listen stats
+    bind :{{ ha_haproxy_stat_port }}
+    mode http
+    stats enable
+    stats show-node
+    stats uri {{ ha_haproxy_stat_uri }}
+    stats refresh 10s
+
+listen ocp_kubernetes_api
+    bind lb-vip.ocp.example.com:6443
+
+    mode tcp
+    option tcplog
+    balance source
+    
+    server      bootstrap     bootstrap.ocp.example.com:6443   check  resolvers haproxy_dns  init-addr none
+    server      master1       master1.ocp.example.com:6443     check  resolvers haproxy_dns  init-addr none
+    server      master2       master2.ocp.example.com:6443     check  resolvers haproxy_dns  init-addr none
+    server      master3       master3.ocp.example.com:6443     check  resolvers haproxy_dns  init-addr none
+
+frontend ocp_machine_config_server
+    bind lb-vip.ocp.example.com:22623
+
+    mode tcp
+    option tcplog
+    balance source
+
+    server      bootstrap     bootstrap.ocp.example.com:22623   check  resolvers haproxy_dns  init-addr none
+    server      master1       master1.ocp.example.com:22623     check  resolvers haproxy_dns  init-addr none
+    server      master2       master2.ocp.example.com:22623     check  resolvers haproxy_dns  init-addr none
+    server      master3       master3.ocp.example.com:22623     check  resolvers haproxy_dns  init-addr none
+
+# Ingress can be on masters (compact cluster), on some or all workers, or on dedicated infra nodes
+frontend ocp_http_ingress
+    bind lb-vip.ocp.example.com:80
+
+    mode tcp
+    option tcplog
+    balance source
+
+    server      master1       master1.ocp.example.com:80     check  resolvers haproxy_dns  init-addr none
+    server      master2       master2.ocp.example.com:80     check  resolvers haproxy_dns  init-addr none
+    server      master3       master3.ocp.example.com:80     check  resolvers haproxy_dns  init-addr none
+    server      infra1        infra1.ocp.example.com:80      check  resolvers haproxy_dns  init-addr none 
+    server      worker1       worker1.ocp.example.com:80     check  resolvers haproxy_dns  init-addr none   
+
+frontend ocp_https_ingress
+    bind lb-vip.ocp.example.com:443
+
+    mode tcp
+    option tcplog
+    balance source
+
+    server      master1       master1.ocp.example.com:443     check  resolvers haproxy_dns  init-addr none
+    server      master2       master2.ocp.example.com:443     check  resolvers haproxy_dns  init-addr none
+    server      master3       master3.ocp.example.com:443     check  resolvers haproxy_dns  init-addr none
+    server      infra1        infra1.ocp.example.com:443      check  resolvers haproxy_dns  init-addr none 
+    server      worker1       worker1.ocp.example.com:443     check  resolvers haproxy_dns  init-addr none  
