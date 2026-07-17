@@ -1,12 +1,46 @@
 ---
 # tasks file for ha_haproxy
 
-- name: Install packages
+- name: Install required packages
+  become: true
   ansible.builtin.dnf:
     name: "{{ ha_haproxy_packages }}"
     state: present
 
+- name: Open firewall ports
+  become: true
+  ansible.posix.firewalld:
+    zone: public
+    state: enabled
+    immediate: true
+    permanent: true
+    port: "{{ item }}"
+  loop: "{{ ha_haproxy_fw_ports }}"
+
+# Keepalived setup
+
+- name: Deploy keepalived config
+  become: true
+  ansible.builtin.template:
+    src: templates/keepalived.conf.j2
+    dest: /etc/keepalived/keepalived.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart keepalived
+  tags: keepalived_reconfig
+
+- name: Enable and start keepalived
+  become: true
+  ansible.builtin.systemd:
+    name: keepalived
+    state: started
+    enabled: true
+
+# Haproxy setup 
+
 - name: Set sysctl to bind non-local address
+  become: true
   ansible.posix.sysctl:
     name: net.ipv4.ip_nonlocal_bind
     value: '1'
@@ -16,12 +50,14 @@
     sysctl_set: true
 
 - name: Setsebool permanent any connect
+  become: true
   ansible.posix.seboolean:
     name: haproxy_connect_any
     state: true
     persistent: true
 
 - name: Create conf.d for haproxy
+  become: true
   ansible.builtin.file:
     path: "/etc/haproxy/conf.d"
     owner: root
@@ -30,54 +66,68 @@
     state: directory
 
 - name: Deploy config for haproxy
+  become: true
   ansible.builtin.template:
     src: haproxy.cfg.j2
     dest: "/etc/haproxy/haproxy.cfg"
     owner: root
     group: root
     mode: "0644"
+  notify: Restart haproxy
+  tags: haproxy_reconfig
 
-- name: Open firewall ports
-  ansible.posix.firewalld:
-    zone: public
-    state: enabled
-    immediate: true
-    permanent: true
-    port: "{{ ha_haproxy_fw_ports }}"
+- name: Configure rsyslog for haproxy log 
+  become: true
+  ansible.builtin.copy:
+    dest: /etc/rsyslog.d/98-haproxy.conf
+    content: |
+      $AddUnixListenSocket /var/lib/haproxy/rsyslog-socket
+      {{ ha_haproxy_syslog_facility }}.* action(type="omfile" file="{{ ha_haproxy_logfile }}")
+  notify: Restart rsyslog
 
-#######################
-- name: Configure rsyslog for haproxy log file
-  ansible.builtin.lineinfile:
-    path: /etc/rsyslog.conf
-    insertafter: '^local7.*'
-    line: "{{ ha_haproxy_syslog_facility }}.*                       {{ ha_haproxy_logfile }}"
-    state: present
+- name: Create SELinux type enforcement file
+  become: true
+  ansible.builtin.copy:
+    dest: /root/rsyslog-haproxy.te
+    content: |
+      module rsyslog-haproxy 2.0;
 
-- name: Restart rsyslog
-  ansible.builtin.systemd:
-    name: rsyslog
-    state: restarted
-#######################
+      require {
+              type syslogd_t;
+              type haproxy_var_lib_t;
+              class dir { add_name remove_name write search };
+              class sock_file { create setattr unlink };
+      }
 
-- name: Deploy keepalived config
-  ansible.builtin.template:
-    src: templates/keepalived.conf.j2
-    dest: /etc/keepalived/keepalived.conf
-    owner: root
-    group: root
-    mode: "0644"
+      allow syslogd_t haproxy_var_lib_t:dir { add_name remove_name write search };
+      allow syslogd_t haproxy_var_lib_t:sock_file { create setattr unlink };
+    mode: '0600'
+  register: rsyslogd_selinux_policy
+  notify:
+    - Restart rsyslog
+    - Restart haproxy
 
-- name: Enable and start keepalived
-  ansible.builtin.systemd:
-    name: keepalived
-    state: started
-    enabled: true
+- name: Compile SELinux module
+  become: true
+  ansible.builtin.command: checkmodule -M -m -o /root/rsyslog-haproxy.mod /root/rsyslog-haproxy.te
+  when: rsyslogd_selinux_policy.changed
+  changed_when: true
+
+- name: Package SELinux module
+  become: true
+  ansible.builtin.command: semodule_package -o /root/rsyslog-haproxy.pp -m /root/rsyslog-haproxy.mod
+  when: rsyslogd_selinux_policy.changed
+  changed_when: true
+
+- name: Load SELinux module
+  become: true
+  ansible.builtin.command: semodule -i /root/rsyslog-haproxy.pp
+  when: rsyslogd_selinux_policy.changed
+  changed_when: true
 
 - name: Enable and start haproxy
+  become: true
   ansible.builtin.systemd:
     name: haproxy
     state: started
     enabled: true
-
-
-

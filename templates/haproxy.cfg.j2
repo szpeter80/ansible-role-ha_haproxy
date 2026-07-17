@@ -1,5 +1,10 @@
+# Configuration for HAProxy 3.0.5 as included in RHEL 10.2
+# https://docs.haproxy.org/3.0/configuration.html
+# 
+# Known bugs: https://www.haproxy.org/bugs/bugs-3.0.html 
+
 global
-    log         127.0.0.1 {{ ha_haproxy_syslog_facility }}
+    log         /rsyslog-socket {{ ha_haproxy_syslog_facility }}
 
     chroot      /var/lib/haproxy
     pidfile     /var/run/haproxy.pid
@@ -21,13 +26,12 @@ global
 defaults
     mode                    http
     log                     global
-    option                  httplog
+    option                  tcplog
     option                  dontlognull
-    option http-server-close
+    option                  http-server-close
+    option                  log-health-checks
     option                  redispatch
-
     retries                 3
-
     timeout http-request    10s
     timeout queue           1m
     timeout connect         10s
@@ -47,6 +51,7 @@ listen stats
     mode http
     stats enable
     stats show-node
+    stats show-legends
     stats uri {{ ha_haproxy_stat_uri }}
     stats refresh 10s
 
@@ -54,49 +59,54 @@ listen ocp_kubernetes_api
     bind lb-vip.ocp.example.com:6443
 
     mode tcp
-    option tcplog
-    balance source
-    
-    server      bootstrap     bootstrap.ocp.example.com:6443   check  resolvers haproxy_dns  init-addr none
-    server      master1       master1.ocp.example.com:6443     check  resolvers haproxy_dns  init-addr none
-    server      master2       master2.ocp.example.com:6443     check  resolvers haproxy_dns  init-addr none
-    server      master3       master3.ocp.example.com:6443     check  resolvers haproxy_dns  init-addr none
+    balance roundrobin
+    option httpchk GET /readyz HTTP/1.0
+ 
+    server      bootstrap     bootstrap.ocp.example.com:6443   resolvers haproxy_dns init-addr none  verify none check check-ssl inter 10s fall 2 rise 3
+    server      master1       master1.ocp.example.com:6443     resolvers haproxy_dns init-addr none  verify none check check-ssl inter 10s fall 2 rise 3
+    server      master2       master2.ocp.example.com:6443     resolvers haproxy_dns init-addr none  verify none check check-ssl inter 10s fall 2 rise 3
+    server      master3       master3.ocp.example.com:6443     resolvers haproxy_dns init-addr none  verify none check check-ssl inter 10s fall 2 rise 3
 
 frontend ocp_machine_config_server
     bind lb-vip.ocp.example.com:22623
 
     mode tcp
-    option tcplog
-    balance source
+    balance roundrobin
 
-    server      bootstrap     bootstrap.ocp.example.com:22623   check  resolvers haproxy_dns  init-addr none
-    server      master1       master1.ocp.example.com:22623     check  resolvers haproxy_dns  init-addr none
-    server      master2       master2.ocp.example.com:22623     check  resolvers haproxy_dns  init-addr none
-    server      master3       master3.ocp.example.com:22623     check  resolvers haproxy_dns  init-addr none
+    server      bootstrap     bootstrap.ocp.example.com:22623   resolvers haproxy_dns  init-addr none  check  inter 1 s
+    server      master1       master1.ocp.example.com:22623     resolvers haproxy_dns  init-addr none  check  inter 1 s
+    server      master2       master2.ocp.example.com:22623     resolvers haproxy_dns  init-addr none  check  inter 1 s
+    server      master3       master3.ocp.example.com:22623     resolvers haproxy_dns  init-addr none  check  inter 1 s
 
 # Ingress can be on masters (compact cluster), on some or all workers, or on dedicated infra nodes
 frontend ocp_http_ingress
     bind lb-vip.ocp.example.com:80
 
     mode tcp
-    option tcplog
     balance source
+    option httpchk
+    http-check connect
+    http-check send meth GET uri /healthz/ready
+    http-check expect status 200
 
-    server      master1       master1.ocp.example.com:80     check  resolvers haproxy_dns  init-addr none
-    server      master2       master2.ocp.example.com:80     check  resolvers haproxy_dns  init-addr none
-    server      master3       master3.ocp.example.com:80     check  resolvers haproxy_dns  init-addr none
-    server      infra1        infra1.ocp.example.com:80      check  resolvers haproxy_dns  init-addr none 
-    server      worker1       worker1.ocp.example.com:80     check  resolvers haproxy_dns  init-addr none   
+    server      master1       master1.ocp.example.com:80     resolvers haproxy_dns  init-addr none  check  port 1936 inter 10s fall 2 rise 3
+    server      master2       master2.ocp.example.com:80     resolvers haproxy_dns  init-addr none  check  port 1936 inter 10s fall 2 rise 3
+    server      master3       master3.ocp.example.com:80     resolvers haproxy_dns  init-addr none  check  port 1936 inter 10s fall 2 rise 3
+    server      infra1        infra1.ocp.example.com:80      resolvers haproxy_dns  init-addr none  check  port 1936 inter 10s fall 2 rise 3
+    server      worker1       worker1.ocp.example.com:80     resolvers haproxy_dns  init-addr none  check  port 1936 inter 10s fall 2 rise 3
 
 frontend ocp_https_ingress
     bind lb-vip.ocp.example.com:443
 
     mode tcp
-    option tcplog
     balance source
+    option httpchk
+    http-check connect
+    http-check send meth GET uri /healthz/ready
+    http-check expect status 200
 
-    server      master1       master1.ocp.example.com:443     check  resolvers haproxy_dns  init-addr none
-    server      master2       master2.ocp.example.com:443     check  resolvers haproxy_dns  init-addr none
-    server      master3       master3.ocp.example.com:443     check  resolvers haproxy_dns  init-addr none
-    server      infra1        infra1.ocp.example.com:443      check  resolvers haproxy_dns  init-addr none 
-    server      worker1       worker1.ocp.example.com:443     check  resolvers haproxy_dns  init-addr none  
+    server      master1       master1.ocp.example.com:443      resolvers haproxy_dns  init-addr none  check  port 1936 inter 10s fall 2 rise 3
+    server      master2       master2.ocp.example.com:443      resolvers haproxy_dns  init-addr none  check  port 1936 inter 10s fall 2 rise 3
+    server      master3       master3.ocp.example.com:443      resolvers haproxy_dns  init-addr none  check  port 1936 inter 10s fall 2 rise 3
+    server      infra1        infra1.ocp.example.com:443       resolvers haproxy_dns  init-addr none  check  port 1936 inter 10s fall 2 rise 3
+    server      worker1       worker1.ocp.example.com:443      resolvers haproxy_dns  init-addr none  check  port 1936 inter 10s fall 2 rise 3

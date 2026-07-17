@@ -3,19 +3,19 @@ global_defs {
 
 vrrp_script chk_haproxy {
     script "/usr/bin/killall -0 haproxy"
-    interval 2 # seconds
-    weight 2 # integer to deduct if check fail
+    interval 2   # seconds
+    weight 2     # integer to deduct if check fail
 } 
 
 
 vrrp_instance VI_1 {
     interface {{ ansible_default_ipv4.interface }}
 
-    state {{ 'MASTER' if ha_haproxy_is_primary else 'BACKUP' }} 
-    priority {{ '101' if ha_haproxy_is_primary else '100' }}
+    state {{ 'MASTER' if (ha_haproxy_is_primary | bool) else 'BACKUP' }} 
+    priority {{ '101' if (ha_haproxy_is_primary | bool) else '100' }}
 
     advert_int 1
-    virtual_router_id 1
+    virtual_router_id 90
 
     authentication {
         auth_type PASS
@@ -23,7 +23,7 @@ vrrp_instance VI_1 {
     }
 
     virtual_ipaddress {
-        {{ ha_haproxy_vip }}
+        {{ ha_haproxy_vip_api }}
     }
 
     unicast_src_ip {{ ansible_default_ipv4.address }}
@@ -39,3 +39,33 @@ vrrp_instance VI_1 {
     }
 }
 
+
+vrrp_instance VI_2 {
+    interface {{ ansible_default_ipv4.interface }}
+
+    state {{ 'MASTER' if (ha_haproxy_is_primary | bool) else 'BACKUP' }} 
+    priority {{ '101' if (ha_haproxy_is_primary | bool) else '100' }}
+
+    advert_int 1
+    virtual_router_id 91
+
+    authentication {
+        auth_type PASS
+        auth_pass {{ ha_haproxy_vrrp_pass }}
+    }
+
+    virtual_ipaddress {
+        {{ ha_haproxy_vip_ingress }}
+    }
+
+    unicast_src_ip {{ ansible_default_ipv4.address }}
+    unicast_peer {
+    {% for host in groups['g_ha_haproxy'] %}
+      {{ hostvars[host]['ansible_default_ipv4']['address'] if ansible_nodename != host }}
+    {% endfor %}
+    }
+
+    track_script {
+        chk_haproxy
+    }
+}
