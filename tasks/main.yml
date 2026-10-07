@@ -82,7 +82,7 @@
 - name: Deploy config for haproxy
   become: true
   ansible.builtin.template:
-    src: haproxy.cfg.j2
+    src: templates/haproxy.cfg.j2
     dest: "/etc/haproxy/haproxy.cfg"
     owner: root
     group: root
