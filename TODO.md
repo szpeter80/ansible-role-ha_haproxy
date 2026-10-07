@@ -35,17 +35,16 @@ so it stays traceable to wherever it was raised.
         minimal Ubuntu. This one fails silently: VRRP priority stops adjusting and failover degrades with no error.
         Promote to role variables so they can differ per `os_family`.
 
-- [ ] TODO 21. Open VRRP in the firewall. Keepalived does not do this itself — `vrrp_iptables`/`vrrp_nftables` exist
-      only for `no_accept` mode and VMAC IGMP handling, nothing opens a hole for VRRP itself. VRRP is IP protocol 112,
-      not a port, so `ha_haproxy_fw_ports` (a list of `{port, proto}`) cannot carry it and the two backends need
-      different
-      syntax: firewalld wants a rich rule `rule protocol value="vrrp" accept`, while `community.general.ufw` accepts
-      `proto: vrrp` (supported since community.general 10.3.0; 13.4.0 installed here, but the emitted rule is
-      unverified). Failure mode is silent: adverts are dropped, no keepalived error, and failover quietly does not
-      work. Same class as the `killall` problem in TODO 18. Consider a separate `ha_haproxy_fw_protocols` variable
-      handled per family in the two firewall files.
-
 ## Done
+
+- [x] DONE 21. Open VRRP in the firewall (`ce8381f`) — one task per firewall file, not a variable: VRRP is structural
+      to the role, so a variable would imply it could be turned off. Keepalived does not open this itself
+      (`vrrp_iptables`/`vrrp_nftables` only cover `no_accept` and VMAC IGMP). Both backends turned out to accept a
+      protocol as a first-class parameter, so no rich rule is needed after all: `ansible.posix.firewalld` has a
+      `protocol:` key, and `community.general.ufw` has `proto: vrrp` (since community.general 10.3.0; 13.4.0 installed).
+      Confirmed by reading both installed module sources — this corrects an earlier note that said firewalld required a
+      rich rule and that the ufw side was unverified. Zone-wide, not restricted to peer addresses. The Debian task is
+      gated on `ha_haproxy_ufw_usable` like its port task. Still UNVERIFIED against a live host.
 
 - [x] DONE 9. Consistent template `src` paths (`34ee72f`) — both template tasks now use the `templates/` prefix. The
       direction was chosen deliberately: the explicit `templates/haproxy.cfg.j2` form was kept and the bare
