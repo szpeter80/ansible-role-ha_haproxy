@@ -36,8 +36,6 @@ so it stays traceable to wherever it was raised.
       currently opened in `public` via `ha_haproxy_fw_ports` with no credentials, so reachable from anywhere, not just
       the local host.
 
-
-
 - [ ] TODO 18. Fix distro-sensitive absolute paths hardcoded in templates:
 
       - `haproxy.cfg.j2:9` `chroot /var/lib/haproxy`
