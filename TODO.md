@@ -1,0 +1,75 @@
+# TODO — ha_haproxy Ubuntu 26.04+ support
+
+Status legend: `TODO` | `WIP` | `DONE`
+
+## Tasks
+
+- [ ] TODO 1. OS-conditional package install: `ansible.builtin.apt` when
+      `os_family == 'Debian'`, keep `dnf` for RedHat; add `rsyslog` to
+      `vars/main.yml` packages (may be missing on minimal Ubuntu).
+- [ ] TODO 2. Gate SELinux tasks with
+      `when: ansible_selinux.status|default('disabled') == 'enabled'`
+      (seboolean + .te/compile/load chain in `tasks/main.yml`).
+- [ ] TODO 3. Firewall branch: install/enable firewalld on Debian family,
+      or switch to `ufw`.
+- [ ] TODO 4. Verify `ssl-default-bind-ciphers PROFILE=SYSTEM` works with
+      Ubuntu's OpenSSL 3 build; adjust template if not.
+- [ ] TODO 5. Refactor hardcoded `*.ocp.example.com` backends in
+      `templates/haproxy.cfg.j2` into role variables (needed for real
+      multi-distro testing).
+- [ ] TODO 6. Update `meta/main.yml` (platforms, license, author) and
+      README (Ubuntu support, fix stale `ha_haproxy_vip` example var).
+- [ ] TODO 7. Add Ubuntu test inventory/playbook under `tests/`. The
+      current `tests/test.yml` targets `localhost` with no variables set,
+      so `ha_haproxy_vip_api` renders empty and `groups['g_ha_haproxy']`
+      fails outright.
+- [ ] TODO 8. Full verification run: `ansible-lint` + `yamllint` +
+      playbook run against RHEL and Ubuntu targets.
+- [ ] TODO 16. Autenticate the stats listener on `:1936` (or at minimum
+      bind it to the management interface). It is currently opened in
+      `public` via `ha_haproxy_fw_ports` with no credentials. Promoted
+      from "known gaps" because the firewall exposure makes it reachable
+      from anywhere, not just the local host.
+
+## Findings from code review (2026-10-07)
+
+- [ ] TODO 9. Fix inconsistent template `src` path in
+      `tasks/main.yml:25` (`templates/keepalived.conf.j2`) to match
+      `tasks/main.yml:71` (`haproxy.cfg.j2`). The first only resolves by
+      Ansible's template search-path fallback.
+- [ ] TODO 10. Ensure `/etc/keepalived` exists before deploying
+      `keepalived.conf` (add an `ansible.builtin.file` task with
+      `state: directory`). Today it only works because the RHEL package
+      creates the directory.
+- [ ] TODO 11. Decouple VIPs from HAProxy binds: `haproxy.cfg.j2` hardcodes
+      `bind lb-vip.ocp.example.com:{6443,22623,80,443}` while
+      `ha_haproxy_vip_api` / `ha_haproxy_vip_ingress` are consumed only by
+      `keepalived.conf.j2`. Overlaps TODO 5; keep in one place.
+- [ ] TODO 12. Either deploy `files/haproxy_stat.sh` via a `copy` task
+      (with `mode: "0755"`) or remove it — it is currently dead weight,
+      never referenced by any task.
+- [ ] TODO 13. Add `{% else %}` to the `unicast_peer` loop in
+      `keepalived.conf.j2` (lines 32-35 and 63-66) so a
+      `ansible_nodename` / inventory-hostname mismatch fails loudly
+      instead of emitting blank lines.
+- [ ] TODO 14. Fix stale README example: it documents `ha_haproxy_vip`,
+      which no longer exists — it was split into `ha_haproxy_vip_api` and
+      `ha_haproxy_vip_ingress`. Include the required `[g_ha_haproxy]` group
+      and the fact that `ha_haproxy_is_primary` must be true on exactly
+      one host (defaults/main.yml:4 comment is truncated mid-sentence).
+- [ ] TODO 15. Replace the untouched galaxy scaffold in `meta/main.yml`
+      (`author: your name`, `license: license (GPL-2.0-or-later, MIT, etc)`,
+      `min_ansible_version: 2.1`) with real values; declare the
+      `ansible.posix` collection dependency instead of only documenting it
+      in the README.
+
+## Known gaps (out of scope unless requested)
+
+- [ ] Stats page binds `:1936` with no authentication (firewall-opened).
+- [ ] Logrotate coverage for custom `ha_haproxy_logfile`.
+- [ ] `keepalived` unicast_peer loop has no `else` (blank lines if
+      `ansible_nodename` mismatches inventory hostname).
+
+## Execution log
+
+- (none)
