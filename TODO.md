@@ -32,10 +32,7 @@ so it stays traceable to wherever it was raised.
 - [ ] TODO 13. Add `{% else %}` to the `unicast_peer` loop in `keepalived.conf.j2` so a `ansible_nodename` /
       inventory-hostname mismatch fails loudly instead of emitting blank lines.
 
-- [ ] TODO 15. Partial: `meta/main.yml` scaffold replaced in `6115206` (author, MIT, min_ansible_version "2.15",
-      platforms, galaxy_tags) — all 14 lint `schema`/`meta-incorrect` findings cleared. Still open: declare the
-      `ansible.posix` collection dependency instead of only documenting it in the README (needs a decision:
-      `dependencies:` vs `collections/requirements.yml`).
+
 
 - [ ] TODO 16. Autenticate the stats listener on `:1936` (or at minimum bind it to the management interface). It is
       currently opened in `public` via `ha_haproxy_fw_ports` with no credentials, so reachable from anywhere, not just
@@ -67,6 +64,14 @@ so it stays traceable to wherever it was raised.
       handled per family in the two firewall files.
 
 ## Done
+
+- [x] DONE 15. Galaxy metadata and collection declaration — `meta/main.yml` scaffold replaced in `6115206` (author,
+      MIT, `min_ansible_version "2.15"` quoted since unquoted 2.1 parsed as a float, platforms, galaxy_tags), clearing
+      all 14 lint `schema`/`meta-incorrect` findings. Collection declaration added in `52a92e2`:
+      `collections/requirements.yml` listing `ansible.posix` and `community.general`, chosen over
+      `meta/main.yml` `dependencies:` because a role dependency triggers a Galaxy fetch during the play, which fails
+      on an air-gapped controller. Verified the declared set matches actual FQCN usage in `tasks/` and
+      `handlers/` exactly, in both directions. `dependencies: []` kept with a comment explaining why.
 
 - [x] DONE 6 + 14. README rewrite (`2bd5113`) — documented `ansible_os_family` as the pivot with a per-family
       support table (packages and firewall backend), replaced the stale `ha_haproxy_vip` example with
