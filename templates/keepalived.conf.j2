@@ -28,10 +28,12 @@ vrrp_instance VI_1 {
 
     unicast_src_ip {{ ansible_default_ipv4.address }}
     unicast_peer {
-
-    {% for host in groups['g_ha_haproxy'] %}
-      {{ hostvars[host]['ansible_default_ipv4']['address'] if ansible_nodename != host }}
-    {% endfor %}
+    {# printing all ips in the group except the actual managed host #}
+    {%- for host in groups['g_ha_haproxy'] %}
+    {%- if hostvars[host]['ansible_default_ipv4']['address'] != ansible_default_ipv4.address %}
+      {{ hostvars[host]['ansible_default_ipv4']['address'] }}
+    {%- endif %}
+    {%- endfor %}
     }
 
     track_script {
@@ -60,9 +62,12 @@ vrrp_instance VI_2 {
 
     unicast_src_ip {{ ansible_default_ipv4.address }}
     unicast_peer {
-    {% for host in groups['g_ha_haproxy'] %}
-      {{ hostvars[host]['ansible_default_ipv4']['address'] if ansible_nodename != host }}
-    {% endfor %}
+    {# printing all ips in the group except the actual managed host #}
+    {%- for host in groups['g_ha_haproxy'] %}
+    {%- if hostvars[host]['ansible_default_ipv4']['address'] != ansible_default_ipv4.address %}
+      {{ hostvars[host]['ansible_default_ipv4']['address'] }}
+    {%- endif %}
+    {%- endfor %}
     }
 
     track_script {
