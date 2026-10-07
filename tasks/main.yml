@@ -1,6 +1,19 @@
 ---
 # tasks file for ha_haproxy
 
+- name: Assert target os_family is supported
+  ansible.builtin.assert:
+    that: ansible_os_family in ha_haproxy_supported_os_families
+    fail_msg: >-
+      Unsupported os_family '{{ ansible_os_family }}'
+      ({{ ansible_distribution }} {{ ansible_distribution_version }}).
+      Supported: {{ ha_haproxy_supported_os_families | join(', ') }}.
+      Extend ha_haproxy_supported_os_families and
+      ha_haproxy_packages_by_os_family to add support.
+    quiet: true
+  tags:
+    - always
+
 - name: Install required packages
   become: true
   ansible.builtin.dnf:

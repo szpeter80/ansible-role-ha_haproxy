@@ -5,6 +5,14 @@
 # That host gets VRRP state MASTER / priority 101, the rest get BACKUP / 100.
 ha_haproxy_is_primary: false
 
+# os_families this role is tested against. This list is the role's contract:
+# tasks/main.yml asserts the target is one of them before doing anything.
+# Adding a family means adding it to ha_haproxy_packages_by_os_family in
+# vars/main.yml too, or the assert passes and the package lookup then fails.
+ha_haproxy_supported_os_families:
+  - RedHat
+  - Debian
+
 # Resolved package list for the target's os_family. Overridable: set
 # ha_haproxy_packages directly to bypass the per-family table in
 # vars/main.yml (useful when a distro needs an extra package).
