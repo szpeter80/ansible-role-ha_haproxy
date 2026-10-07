@@ -1,8 +1,15 @@
 ---
 # defaults file for ha_haproxy
 
-# Set this to true in exactly of one of the 
+# Set this to true on exactly one host in the [g_ha_haproxy] group.
+# That host gets VRRP state MASTER / priority 101, the rest get BACKUP / 100.
 ha_haproxy_is_primary: false
+
+# Resolved package list for the target's os_family. Overridable: set
+# ha_haproxy_packages directly to bypass the per-family table in
+# vars/main.yml (useful when a distro needs an extra package).
+ha_haproxy_packages: >-
+  {{ ha_haproxy_packages_by_os_family[ansible_os_family] }}
 
 ha_haproxy_vip_api: ""        # virtual ip for incoming traffic (API)
 ha_haproxy_vip_ingress: ""    # virtual ip for incoming traffic (Ingress)

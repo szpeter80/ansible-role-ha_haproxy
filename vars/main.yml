@@ -1,7 +1,17 @@
 ---
 # vars file for ha_haproxy
 
-ha_haproxy_packages:
-  - haproxy
-  - keepalived
-  - nc  # required by files/haproxy_stat.sh (deployed to /root/haproxy_stat.sh)
+# Packages required per os_family. ansible_os_family is the pivot for the
+# whole role: it also selects the package manager (see tasks/main.yml) and
+# gates the SELinux and firewall branches.
+ha_haproxy_packages_by_os_family:
+  RedHat:
+    - haproxy
+    - keepalived
+    - nc          # required by files/haproxy_stat.sh
+    - rsyslog     # config + restart handler depend on it
+  Debian:
+    - haproxy
+    - keepalived
+    - netcat-openbsd  # 'nc' is transitional on Debian family
+    - rsyslog
