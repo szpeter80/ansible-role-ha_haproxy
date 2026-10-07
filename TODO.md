@@ -46,13 +46,13 @@ Status legend: `TODO` | `WIP` | `DONE`
       - `keepalived.conf.j2:5` `/usr/bin/killall` — `killall` ships in
         `psmisc` on Debian, not installed by default on minimal Ubuntu
       Promote to role variables so they can differ per `os_family`.
-- [ ] TODO 19. Settle the `haproxy_stat.sh` destination (TODO 12) as a
-      deliberate decision. The role has no precedent for deploying an
-      executable: all four existing deploys go to package-owned config dirs
-      (`/etc/keepalived`, `/etc/haproxy`, `/etc/rsyslog.d`, plus `/root` for
-      the SELinux `.te`), and this script is not a package file. Either pick
-      a path and document it, or delete the script. Note it needs `nc`
-      (`netcat`), currently an undeclared dependency.
+- [x] DONE 19. Settle the `haproxy_stat.sh` destination as a deliberate
+      decision. Resolved: `/root/haproxy_stat.sh`, chosen to match the
+      existing `/root/rsyslog-haproxy.te` precedent (admin helper, not
+      service config) and to keep the script off any PATH since it is
+      invoked manually. Runs as root — required to read
+      `/var/lib/haproxy/stats`. `nc` dependency now declared in
+      `vars/main.yml`.
 
 ## Findings from code review (2026-10-07)
 
@@ -71,9 +71,10 @@ Status legend: `TODO` | `WIP` | `DONE`
       `bind lb-vip.ocp.example.com:{6443,22623,80,443}` while
       `ha_haproxy_vip_api` / `ha_haproxy_vip_ingress` are consumed only by
       `keepalived.conf.j2`. Overlaps TODO 5; keep in one place.
-- [ ] TODO 12. Either deploy `files/haproxy_stat.sh` via a `copy` task
-      (with `mode: "0755"`) or remove it — it is currently dead weight,
-      never referenced by any task.
+- [x] DONE 12. Deploy `files/haproxy_stat.sh` via a `copy` task. Done in
+      `bd256f8` — installed to `/root/haproxy_stat.sh`, mode `0755`,
+      alongside the haproxy config deploy. `nc` added to
+      `ha_haproxy_packages` so the script's `nc -U` call resolves.
 - [ ] TODO 13. Add `{% else %}` to the `unicast_peer` loop in
       `keepalived.conf.j2` (lines 32-35 and 63-66) so a
       `ansible_nodename` / inventory-hostname mismatch fails loudly

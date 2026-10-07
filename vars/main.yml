@@ -4,3 +4,4 @@
 ha_haproxy_packages:
   - haproxy
   - keepalived
+  - nc  # required by files/haproxy_stat.sh (deployed to /root/haproxy_stat.sh)
