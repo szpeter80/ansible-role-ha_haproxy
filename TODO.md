@@ -26,12 +26,7 @@ so it stays traceable to wherever it was raised.
       currently opened in `public` via `ha_haproxy_fw_ports` with no credentials, so reachable from anywhere, not just
       the local host.
 
-- [ ] TODO 18. `killall` dependency and the legacy pidfile path. `keepalived.conf.j2:5` runs `/usr/bin/killall -0
-      haproxy`, but `killall` ships in `psmisc`, which is absent from minimal images on BOTH families — and the
-      failure is silent: the track script stops working, VRRP priority stops adjusting, failover degrades with no error
-      anywhere. `haproxy.cfg.j2:10` also uses `/var/run/haproxy.pid` where the FHS-correct spelling is `/run`.
-      Dropped from the original scope: `chroot /var/lib/haproxy`, the stats socket, and `/etc/haproxy/conf.d` are
-      identical on RedHat and Debian.
+
 
 ## Done
 
@@ -46,8 +41,8 @@ so it stays traceable to wherever it was raised.
 - [x] DONE 21. Open VRRP in the firewall (`ce8381f`) — one task per firewall file, not a variable: VRRP is structural
       to the role, so a variable would imply it could be turned off. Keepalived does not open this itself
       (`vrrp_iptables`/`vrrp_nftables` only cover `no_accept` and VMAC IGMP). Both backends turned out to accept a
-      protocol as a first-class parameter, so no rich rule is needed after all: `ansible.posix.firewalld` has a
-      `protocol:` key, and `community.general.ufw` has `proto: vrrp` (since community.general 10.3.0; 13.4.0 installed).
+      protocol as a first-class parameter, so no rich rule is needed after all: `ansible.posix.firewalld` has a `protocol:`
+      key, and `community.general.ufw` has `proto: vrrp` (since community.general 10.3.0; 13.4.0 installed).
       Confirmed by reading both installed module sources — this corrects an earlier note that said firewalld required a
       rich rule and that the ufw side was unverified. Zone-wide, not restricted to peer addresses. The Debian task is
       gated on `ha_haproxy_ufw_usable` like its port task. Still UNVERIFIED against a live host.
