@@ -8,3 +8,14 @@
     permanent: true
     port: "{{ item.port }}/{{ item.proto }}"
   loop: "{{ ha_haproxy_fw_ports }}"
+
+# VRRP is IP protocol 112, not a port, so it needs its own rule. Keepalived does
+# not open this itself.
+- name: Open VRRP between the keepalived nodes
+  become: true
+  ansible.posix.firewalld:
+    zone: public
+    state: enabled
+    immediate: true
+    permanent: true
+    protocol: vrrp

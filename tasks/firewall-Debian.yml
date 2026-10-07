@@ -31,3 +31,13 @@
     direction: "{{ 'in' }}"
   loop: "{{ ha_haproxy_fw_ports }}"
   when: ha_haproxy_ufw_usable | bool
+
+# VRRP is IP protocol 112, not a port, so it needs its own rule. Keepalived does
+# not open this itself.
+- name: Open VRRP between the keepalived nodes
+  become: true
+  community.general.ufw:
+    rule: allow
+    proto: vrrp
+    direction: "{{ 'in' }}"
+  when: ha_haproxy_ufw_usable | bool
