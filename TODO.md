@@ -22,8 +22,6 @@ so it stays traceable to wherever it was raised.
       `haproxy.cfg.j2`. Cosmetic only — Ansible's `template` module searches both `<role>/templates/` and `<role>/`, so
       both forms resolve to the same file. An earlier review called this fragile, which overstated it.
 
-
-
 - [ ] TODO 11. Decouple VIPs from HAProxy binds: `haproxy.cfg.j2` hardcodes `bind
       lb-vip.ocp.example.com:{6443,22623,80,443}` while `ha_haproxy_vip_api` / `ha_haproxy_vip_ingress` are consumed
       only by `keepalived.conf.j2`.
