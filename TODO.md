@@ -16,7 +16,7 @@ so it stays traceable to wherever it was raised.
 - [ ] TODO 7. Add Ubuntu test inventory/playbook under `tests/`. The current `tests/test.yml` targets `localhost` with
       no variables set, so `ha_haproxy_vip_api` renders empty and `groups['g_ha_haproxy']` fails outright.
 
-- [ ] TODO 8. Full verification run: `ansible-lint` + `yamllint` + playbook run against RHEL and Ubuntu targets.
+- [ ] TODO 99. Full verification run: `ansible-lint` + `yamllint` + playbook run against RHEL and Ubuntu targets.
 
 - [ ] TODO 9. Fix inconsistent template `src` path in `tasks/main.yml` (`templates/keepalived.conf.j2`) to match
       `haproxy.cfg.j2`. Cosmetic only — Ansible's `template` module searches both `<role>/templates/` and `<role>/`, so
@@ -90,7 +90,7 @@ so it stays traceable to wherever it was raised.
       `include_tasks` on `pkg-install-<Family>.yml`, with per-family package tables in `vars/main.yml` (`nc` on RedHat,
       `netcat-openbsd` on Debian, both adding `rsyslog`), plus a first-task assert that the family is in
       `ha_haproxy_supported_os_families`. Closed as code-complete: no Debian target is available to verify against.
-      Target-side checks (`netcat-openbsd` naming, `keepalived` postinst) are carried by TODO 8.
+      Target-side checks (`netcat-openbsd` naming, `keepalived` postinst) are carried by TODO 99.
 
 - [x] DONE 2. Gate SELinux tasks (`a534357`) — added derived var `ha_haproxy_selinux_enabled` in `defaults/main.yml`
       (`ansible_selinux is defined and ansible_selinux.status == 'enabled'`) and applied it to all five tasks
