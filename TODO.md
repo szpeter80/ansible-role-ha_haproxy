@@ -26,8 +26,6 @@ so it stays traceable to wherever it was raised.
       currently opened in `public` via `ha_haproxy_fw_ports` with no credentials, so reachable from anywhere, not just
       the local host.
 
-
-
 ## Done
 
 - [x] DONE 18. `killall` dependency and pidfile path (`bb1d7b1`) — `psmisc` added to both per-family package tables,
@@ -35,14 +33,15 @@ so it stays traceable to wherever it was raised.
       image happening to have it on RedHat too. Making it explicit removes the silent-failure mode. Also changed
       `haproxy.cfg.j2` pidfile from `/var/run/haproxy.pid` to the FHS-correct `/run/haproxy.pid` — same directory on any
       current system, so no behaviour change, but the config no longer encodes a legacy path. Scope narrowed during the
-      work: `chroot /var/lib/haproxy`, the stats socket and `/etc/haproxy/conf.d` are identical on both families and were
-      dropped from this item. Rejected the `pgrep -x haproxy` alternative in favour of keeping the dependency.
+      work: `chroot /var/lib/haproxy`, the stats socket and `/etc/haproxy/conf.d` are identical on both families and
+      were dropped from this item. Rejected the `pgrep -x haproxy` alternative in favour of keeping the dependency.
 
 - [x] DONE 21. Open VRRP in the firewall (`ce8381f`) — one task per firewall file, not a variable: VRRP is structural
       to the role, so a variable would imply it could be turned off. Keepalived does not open this itself
       (`vrrp_iptables`/`vrrp_nftables` only cover `no_accept` and VMAC IGMP). Both backends turned out to accept a
-      protocol as a first-class parameter, so no rich rule is needed after all: `ansible.posix.firewalld` has a `protocol:`
-      key, and `community.general.ufw` has `proto: vrrp` (since community.general 10.3.0; 13.4.0 installed).
+      protocol as a first-class parameter, so no rich rule is needed after all: `ansible.posix.firewalld` has a
+      `protocol:` key, and `community.general.ufw` has `proto: vrrp` (since community.general 10.3.0; 13.4.0
+      installed).
       Confirmed by reading both installed module sources — this corrects an earlier note that said firewalld required a
       rich rule and that the ufw side was unverified. Zone-wide, not restricted to peer addresses. The Debian task is
       gated on `ha_haproxy_ufw_usable` like its port task. Still UNVERIFIED against a live host.
