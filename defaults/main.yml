@@ -20,6 +20,15 @@ ha_haproxy_selinux_enabled: >-
 ha_haproxy_stat_port: 1936
 ha_haproxy_stat_uri: "/stats"
 
+# Proxy fragments deployed into /etc/haproxy/conf.d and loaded via
+# "includedir". The role writes only these files and leaves anything else in
+# that directory untouched — content is expected to land there outside Ansible.
+ha_haproxy_confd:
+  - 10-k8s-api.cfg
+  - 20-machine-config.cfg
+  - 30-http-ingress.cfg
+  - 40-https-ingress.cfg
+
 ha_haproxy_fw_ports:
   # Structured rather than "80/tcp" strings so neither the firewalld nor the
   # ufw task has to parse a protocol back out of a port. firewalld re-joins

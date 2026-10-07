@@ -1,0 +1,15 @@
+frontend ocp_https_ingress
+    bind lb-vip.ocp.example.com:443
+
+    mode tcp
+    balance source
+    option httpchk
+    http-check connect
+    http-check send meth GET uri /healthz/ready
+    http-check expect status 200
+
+    server      master1       master1.ocp.example.com:443      resolvers haproxy_dns  init-addr none  check  port 1936 inter 10s fall 2 rise 3
+    server      master2       master2.ocp.example.com:443      resolvers haproxy_dns  init-addr none  check  port 1936 inter 10s fall 2 rise 3
+    server      master3       master3.ocp.example.com:443      resolvers haproxy_dns  init-addr none  check  port 1936 inter 10s fall 2 rise 3
+    server      infra1        infra1.ocp.example.com:443       resolvers haproxy_dns  init-addr none  check  port 1936 inter 10s fall 2 rise 3
+    server      worker1       worker1.ocp.example.com:443      resolvers haproxy_dns  init-addr none  check  port 1936 inter 10s fall 2 rise 3

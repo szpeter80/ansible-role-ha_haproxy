@@ -1,0 +1,11 @@
+listen ocp_kubernetes_api
+    bind lb-vip.ocp.example.com:6443
+
+    mode tcp
+    balance roundrobin
+    option httpchk GET /readyz HTTP/1.0
+
+    server      bootstrap     bootstrap.ocp.example.com:6443   resolvers haproxy_dns init-addr none  verify none check check-ssl inter 10s fall 2 rise 3
+    server      master1       master1.ocp.example.com:6443     resolvers haproxy_dns init-addr none  verify none check check-ssl inter 10s fall 2 rise 3
+    server      master2       master2.ocp.example.com:6443     resolvers haproxy_dns init-addr none  verify none check check-ssl inter 10s fall 2 rise 3
+    server      master3       master3.ocp.example.com:6443     resolvers haproxy_dns init-addr none  verify none check check-ssl inter 10s fall 2 rise 3

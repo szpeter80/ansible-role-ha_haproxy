@@ -1,0 +1,10 @@
+frontend ocp_machine_config_server
+    bind lb-vip.ocp.example.com:22623
+
+    mode tcp
+    balance roundrobin
+
+    server      bootstrap     bootstrap.ocp.example.com:22623   resolvers haproxy_dns  init-addr none  check  inter 1 s
+    server      master1       master1.ocp.example.com:22623     resolvers haproxy_dns  init-addr none  check  inter 1 s
+    server      master2       master2.ocp.example.com:22623     resolvers haproxy_dns  init-addr none  check  inter 1 s
+    server      master3       master3.ocp.example.com:22623     resolvers haproxy_dns  init-addr none  check  inter 1 s

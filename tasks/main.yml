@@ -80,6 +80,21 @@
   notify: Restart haproxy
   tags: haproxy_reconfig
 
+# Only the files listed in ha_haproxy_confd are written. Anything else in
+# /etc/haproxy/conf.d is left alone: content is expected to land there outside
+# Ansible and is loaded by the includedir above.
+- name: Deploy haproxy proxy fragments to conf.d
+  become: true
+  ansible.builtin.template:
+    src: "conf.d/{{ item | regex_replace('\\.cfg$', '.j2') }}"
+    dest: "/etc/haproxy/conf.d/{{ item }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop: "{{ ha_haproxy_confd }}"
+  notify: Restart haproxy
+  tags: haproxy_reconfig
+
 - name: Install haproxy stat helper
   become: true
   ansible.builtin.copy:
