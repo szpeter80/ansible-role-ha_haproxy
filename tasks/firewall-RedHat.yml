@@ -1,0 +1,10 @@
+---
+- name: Open firewall ports
+  become: true
+  ansible.posix.firewalld:
+    zone: public
+    state: enabled
+    immediate: true
+    permanent: true
+    port: "{{ item.port }}/{{ item.proto }}"
+  loop: "{{ ha_haproxy_fw_ports }}"

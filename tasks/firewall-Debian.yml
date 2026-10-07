@@ -1,0 +1,33 @@
+---
+# Debian family: never install firewalld. ufw is used only if it is already
+# present and enabled/running; otherwise there is nothing to open and we say
+# so rather than installing a firewall the operator did not ask for.
+
+- name: Gather service facts
+  ansible.builtin.service_facts:
+
+- name: Check whether ufw is present and enabled or active
+  ansible.builtin.set_fact:
+    ha_haproxy_ufw_usable: >-
+      {{ 'ufw.service' in ansible_facts.services | default({})
+         and (ansible_facts.services['ufw.service'].state == 'running'
+              or ansible_facts.services['ufw.service'].state == 'enabled') }}
+
+- name: Report that no firewall is active
+  ansible.builtin.debug:
+    msg: >-
+      No usable firewall found (ufw absent, or neither enabled nor running).
+      Skipping {{ ha_haproxy_fw_ports | length }} port rule(s) — open them
+      manually if this host is meant to be filtered. firewalld is
+      deliberately never installed on the Debian family.
+  when: not ha_haproxy_ufw_usable | bool
+
+- name: Open firewall ports with ufw
+  become: true
+  community.general.ufw:
+    rule: allow
+    to_port: "{{ item.port }}"
+    proto: "{{ item.proto }}"
+    direction: "{{ 'in' }}"
+  loop: "{{ ha_haproxy_fw_ports }}"
+  when: ha_haproxy_ufw_usable | bool

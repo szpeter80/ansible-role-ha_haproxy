@@ -21,8 +21,16 @@ ha_haproxy_stat_port: 1936
 ha_haproxy_stat_uri: "/stats"
 
 ha_haproxy_fw_ports:
-  - "{{ ha_haproxy_stat_port }}/tcp"    # haproxy stat
-  - "80/tcp"      # http
-  - "443/tcp"     # https
-  - 6443/tcp      # Kubernetes API
-  - 22623/tcp     # Machine config server
+  # Structured rather than "80/tcp" strings so neither the firewalld nor the
+  # ufw task has to parse a protocol back out of a port. firewalld re-joins
+  # them as "{{ item.port }}/{{ item.proto }}".
+  - port: "{{ ha_haproxy_stat_port }}"   # haproxy stat
+    proto: tcp
+  - port: 80        # http
+    proto: tcp
+  - port: 443       # https
+    proto: tcp
+  - port: 6443      # Kubernetes API
+    proto: tcp
+  - port: 22623     # Machine config server
+    proto: tcp

@@ -17,15 +17,8 @@
 - name: Install required packages
   ansible.builtin.include_tasks: "pkg-install-{{ ansible_os_family }}.yml"
 
-- name: Open firewall ports
-  become: true
-  ansible.posix.firewalld:
-    zone: public
-    state: enabled
-    immediate: true
-    permanent: true
-    port: "{{ item }}"
-  loop: "{{ ha_haproxy_fw_ports }}"
+- name: Configure firewall
+  ansible.builtin.include_tasks: "firewall-{{ ansible_os_family }}.yml"
 
 # Keepalived setup
 
