@@ -2,12 +2,10 @@
 
 Status legend: `TODO` | `WIP` | `DONE`
 
-Items are grouped by status, unsolved first. A DONE entry keeps its original
-number so it stays traceable to the review that raised it.
+Items are grouped by status, unsolved first. An item keeps its original number
+so it stays traceable to wherever it was raised.
 
 ## Unsolved
-
-### Ubuntu porting
 
 - [ ] TODO 1. OS-conditional package install. Partly done — the install now
       branches per `os_family` via `include_tasks` on
@@ -22,17 +20,13 @@ number so it stays traceable to the review that raised it.
 - [ ] TODO 5. Refactor hardcoded `*.ocp.example.com` backends in
       `templates/haproxy.cfg.j2` into role variables (needed for real
       multi-distro testing). Overlaps TODO 11 — keep in one place.
-- [ ] TODO 6. Update README for Ubuntu support. (`meta/main.yml` side of this
-      item is done under TODO 15.)
+- [ ] TODO 6. Update README for Ubuntu support.
 - [ ] TODO 7. Add Ubuntu test inventory/playbook under `tests/`. The
       current `tests/test.yml` targets `localhost` with no variables set,
       so `ha_haproxy_vip_api` renders empty and `groups['g_ha_haproxy']`
       fails outright.
 - [ ] TODO 8. Full verification run: `ansible-lint` + `yamllint` +
       playbook run against RHEL and Ubuntu targets.
-
-### Findings from code review (2026-10-07)
-
 - [ ] TODO 9. Fix inconsistent template `src` path in `tasks/main.yml`
       (`templates/keepalived.conf.j2`) to match `haproxy.cfg.j2`. Cosmetic
       only — Ansible's `template` module searches both `<role>/templates/`
@@ -54,6 +48,7 @@ number so it stays traceable to the review that raised it.
       `ha_haproxy_vip_ingress`. Include the required `[g_ha_haproxy]` group
       and the fact that `ha_haproxy_is_primary` must be true on exactly
       one host (defaults/main.yml comment is truncated mid-sentence).
+      Overlaps TODO 6.
 - [ ] TODO 15. Partial: `meta/main.yml` scaffold replaced in `6115206`
       (author, MIT, min_ansible_version "2.15", platforms, galaxy_tags) —
       all 14 lint `schema`/`meta-incorrect` findings cleared. Still open:
