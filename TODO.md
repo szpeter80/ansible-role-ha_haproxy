@@ -30,13 +30,39 @@ Status legend: `TODO` | `WIP` | `DONE`
       `public` via `ha_haproxy_fw_ports` with no credentials. Promoted
       from "known gaps" because the firewall exposure makes it reachable
       from anywhere, not just the local host.
+- [ ] TODO 17. Resolve the dead `/etc/haproxy/conf.d`: it is created by
+      `tasks/main.yml:59-66` but nothing writes into it, and
+      `haproxy.cfg.j2` has no `includedir /etc/haproxy/conf.d` line — every
+      proxy is hardcoded inline in the one template. Either add
+      `includedir` (which makes TODO 5 far cleaner: per-backend drop-ins
+      instead of a monolith) or drop the task. Highest-leverage item on
+      this list — decide it before the Ubuntu port, since it decides
+      whether that port is a patch or a refactor.
+- [ ] TODO 18. Fix distro-sensitive absolute paths hardcoded in templates:
+      - `haproxy.cfg.j2:9`   `chroot /var/lib/haproxy`
+      - `haproxy.cfg.j2:10`  `pidfile /var/run/haproxy.pid` — Debian/Ubuntu
+        use `/run/haproxy.pid`; same directory today, but `/var/run` is a
+        compat symlink and writing into it is deprecated
+      - `keepalived.conf.j2:5` `/usr/bin/killall` — `killall` ships in
+        `psmisc` on Debian, not installed by default on minimal Ubuntu
+      Promote to role variables so they can differ per `os_family`.
+- [ ] TODO 19. Settle the `haproxy_stat.sh` destination (TODO 12) as a
+      deliberate decision. The role has no precedent for deploying an
+      executable: all four existing deploys go to package-owned config dirs
+      (`/etc/keepalived`, `/etc/haproxy`, `/etc/rsyslog.d`, plus `/root` for
+      the SELinux `.te`), and this script is not a package file. Either pick
+      a path and document it, or delete the script. Note it needs `nc`
+      (`netcat`), currently an undeclared dependency.
 
 ## Findings from code review (2026-10-07)
 
 - [ ] TODO 9. Fix inconsistent template `src` path in
       `tasks/main.yml:25` (`templates/keepalived.conf.j2`) to match
-      `tasks/main.yml:71` (`haproxy.cfg.j2`). The first only resolves by
-      Ansible's template search-path fallback.
+      `tasks/main.yml:71` (`haproxy.cfg.j2`). Cosmetic only — Ansible's
+      `template` module searches both `<role>/templates/` and `<role>/`, so
+      both forms resolve to the same file. Correction: an earlier review
+      called this fragile, which overstated it. Verified by reading module
+      search paths, not by running Ansible (not installed locally).
 - [ ] TODO 10. Ensure `/etc/keepalived` exists before deploying
       `keepalived.conf` (add an `ansible.builtin.file` task with
       `state: directory`). Today it only works because the RHEL package
