@@ -22,4 +22,6 @@ galaxy_info:
     - highavailability
     - openshift
 
+# No role dependencies: collections are declared in
+# collections/requirements.yml instead, so nothing is fetched during a play.
 dependencies: []
