@@ -13,8 +13,6 @@ so it stays traceable to wherever it was raised.
 - [ ] TODO 5. Refactor hardcoded `*.ocp.example.com` backends in `templates/haproxy.cfg.j2` into role variables (needed
       for real multi-distro testing). Overlaps TODO 11 — keep in one place.
 
-- [ ] TODO 6. Update README for Ubuntu support.
-
 - [ ] TODO 7. Add Ubuntu test inventory/playbook under `tests/`. The current `tests/test.yml` targets `localhost` with
       no variables set, so `ha_haproxy_vip_api` renders empty and `groups['g_ha_haproxy']` fails outright.
 
@@ -33,11 +31,6 @@ so it stays traceable to wherever it was raised.
 
 - [ ] TODO 13. Add `{% else %}` to the `unicast_peer` loop in `keepalived.conf.j2` so a `ansible_nodename` /
       inventory-hostname mismatch fails loudly instead of emitting blank lines.
-
-- [ ] TODO 14. Fix stale README example: it documents `ha_haproxy_vip`, which no longer exists — it was split into
-      `ha_haproxy_vip_api` and `ha_haproxy_vip_ingress`. Include the required `[g_ha_haproxy]` group and the fact that
-      `ha_haproxy_is_primary` must be true on exactly one host (defaults/main.yml comment is truncated mid-sentence).
-      Overlaps TODO 6.
 
 - [ ] TODO 15. Partial: `meta/main.yml` scaffold replaced in `6115206` (author, MIT, min_ansible_version "2.15",
       platforms, galaxy_tags) — all 14 lint `schema`/`meta-incorrect` findings cleared. Still open: declare the
@@ -74,6 +67,14 @@ so it stays traceable to wherever it was raised.
       handled per family in the two firewall files.
 
 ## Done
+
+- [x] DONE 6 + 14. README rewrite (`2bd5113`) — documented `ansible_os_family` as the pivot with a per-family
+      support table (packages and firewall backend), replaced the stale `ha_haproxy_vip` example with
+      `ha_haproxy_vip_api` / `ha_haproxy_vip_ingress` under `[g_ha_haproxy:vars]`, documented that
+      `ha_haproxy_is_primary` is true on exactly one host, added `community.general` to the collection list, and added
+      notes on the mandatory `[g_ha_haproxy]` group, the two VRRP instances, the 8-char `auth_pass` cap, and that VRRP
+      is not covered by `ha_haproxy_fw_ports`. Verified every var named in the README exists in `defaults/` or `vars/`.
+      These two items overlapped and were closed together.
 
 - [x] DONE 3. Firewall branch (`78b5b1b`) — the single `ansible.posix.firewalld` task is now
       `include_tasks: "firewall-{{ ansible_os_family }}.yml"`. RedHat keeps firewalld; Debian never installs it, and
