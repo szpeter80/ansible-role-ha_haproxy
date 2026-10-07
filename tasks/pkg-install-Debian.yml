@@ -1,0 +1,8 @@
+---
+- name: Install required packages
+  become: true
+  ansible.builtin.apt:
+    name: "{{ ha_haproxy_packages_by_os_family['Debian'] }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 3600

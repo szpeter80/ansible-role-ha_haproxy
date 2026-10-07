@@ -22,9 +22,3 @@ ha_haproxy_packages_by_os_family:
     - keepalived
     - netcat-openbsd  # 'nc' is transitional on Debian family
     - rsyslog
-
-# Resolved package list for the target's os_family. Intentionally NOT in
-# defaults/main.yml: this role owns its package set, so callers should not be
-# able to override it per-host and end up with a divergent haproxy install.
-ha_haproxy_packages: >-
-  {{ ha_haproxy_packages_by_os_family[ansible_os_family] }}

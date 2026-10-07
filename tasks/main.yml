@@ -15,10 +15,7 @@
     - always
 
 - name: Install required packages
-  become: true
-  ansible.builtin.dnf:
-    name: "{{ ha_haproxy_packages }}"
-    state: present
+  ansible.builtin.include_tasks: "pkg-install-{{ ansible_os_family }}.yml"
 
 - name: Open firewall ports
   become: true
