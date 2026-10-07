@@ -1,7 +1,7 @@
 ---
 galaxy_info:
   author: Peter Szabo
-  description: Active/passive Keepalived + HAProxy pair for an OpenShift Compact Cluster
+  description: Active/passive Keepalived + HAProxy pair
   license: MIT
 
   # FQCN module names (ansible.builtin.*, ansible.posix.*) require 2.10+;
