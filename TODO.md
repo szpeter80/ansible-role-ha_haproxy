@@ -35,6 +35,14 @@ so it stays traceable to wherever it was raised.
 
 ## Done
 
+- [x] DONE 18. `killall` dependency and pidfile path (`bb1d7b1`) — `psmisc` added to both per-family package tables,
+      not just Debian: `killall` ships in `psmisc` on both, so the `chk_haproxy` track script was relying on a minimal
+      image happening to have it on RedHat too. Making it explicit removes the silent-failure mode. Also changed
+      `haproxy.cfg.j2` pidfile from `/var/run/haproxy.pid` to the FHS-correct `/run/haproxy.pid` — same directory on any
+      current system, so no behaviour change, but the config no longer encodes a legacy path. Scope narrowed during the
+      work: `chroot /var/lib/haproxy`, the stats socket and `/etc/haproxy/conf.d` are identical on both families and were
+      dropped from this item. Rejected the `pgrep -x haproxy` alternative in favour of keeping the dependency.
+
 - [x] DONE 21. Open VRRP in the firewall (`ce8381f`) — one task per firewall file, not a variable: VRRP is structural
       to the role, so a variable would imply it could be turned off. Keepalived does not open this itself
       (`vrrp_iptables`/`vrrp_nftables` only cover `no_accept` and VMAC IGMP). Both backends turned out to accept a
