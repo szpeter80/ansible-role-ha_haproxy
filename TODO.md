@@ -18,10 +18,6 @@ so it stays traceable to wherever it was raised.
 
 - [ ] TODO 99. Full verification run: `ansible-lint` + `yamllint` + playbook run against RHEL and Ubuntu targets.
 
-- [ ] TODO 9. Fix inconsistent template `src` path in `tasks/main.yml` (`templates/keepalived.conf.j2`) to match
-      `haproxy.cfg.j2`. Cosmetic only — Ansible's `template` module searches both `<role>/templates/` and `<role>/`, so
-      both forms resolve to the same file. An earlier review called this fragile, which overstated it.
-
 - [ ] TODO 11. Decouple VIPs from HAProxy binds: `haproxy.cfg.j2` hardcodes `bind
       lb-vip.ocp.example.com:{6443,22623,80,443}` while `ha_haproxy_vip_api` / `ha_haproxy_vip_ingress` are consumed
       only by `keepalived.conf.j2`.
@@ -50,6 +46,12 @@ so it stays traceable to wherever it was raised.
       handled per family in the two firewall files.
 
 ## Done
+
+- [x] DONE 9. Consistent template `src` paths (`34ee72f`) — both template tasks now use the `templates/` prefix. The
+      direction was chosen deliberately: the explicit `templates/haproxy.cfg.j2` form was kept and the bare
+      `haproxy.cfg.j2` updated to match it, so the filename stays visible in the task. Zero behaviour change — `template`
+      searches both `<role>/templates/` and `<role>/`, so both forms resolve to the same file. An earlier review called
+      the inconsistency fragile, which overstated it.
 
 - [x] DONE 13. Fix the `unicast_peer` loop in `keepalived.conf.j2` (`4c4a443`) — peers are now matched by comparing
       `hostvars[host]['ansible_default_ipv4']['address']` against this host's `ansible_default_ipv4.address`, so
