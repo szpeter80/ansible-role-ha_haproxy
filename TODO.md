@@ -26,9 +26,6 @@ so it stays traceable to wherever it was raised.
       lb-vip.ocp.example.com:{6443,22623,80,443}` while `ha_haproxy_vip_api` / `ha_haproxy_vip_ingress` are consumed
       only by `keepalived.conf.j2`.
 
-- [ ] TODO 13. Add `{% else %}` to the `unicast_peer` loop in `keepalived.conf.j2` so a `ansible_nodename` /
-      inventory-hostname mismatch fails loudly instead of emitting blank lines.
-
 - [ ] TODO 16. Autenticate the stats listener on `:1936` (or at minimum bind it to the management interface). It is
       currently opened in `public` via `ha_haproxy_fw_ports` with no credentials, so reachable from anywhere, not just
       the local host.
@@ -53,6 +50,14 @@ so it stays traceable to wherever it was raised.
       handled per family in the two firewall files.
 
 ## Done
+
+- [x] DONE 13. Fix the `unicast_peer` loop in `keepalived.conf.j2` (`4c4a443`) — peers are now matched by comparing
+      `hostvars[host]['ansible_default_ipv4']['address']` against this host's `ansible_default_ipv4.address`, so
+      `ansible_nodename` and inventory naming are out of the picture and a naming mismatch cannot produce blank lines.
+      Chose IP matching over the `{% else %}` fail-loud variant: the "fault" was only a naming quirk, not a real error.
+      Verified by rendering the template against three scenarios (nodename mismatched, nodename matching, single node);
+      self is excluded in all three. Kept the stray blank line from the Jinja comment rather than fight whitespace
+      control that conflicts across the tags.
 
 - [x] DONE 10. Guard the keepalived config dir (`9d55918`) — a `stat` plus `assert` before the template task, failing
       with "does not exist" rather than a raw template error. Checked, not created: the role does not paper over a
@@ -123,8 +128,6 @@ so it stays traceable to wherever it was raised.
 
 - [ ] VRRP `auth_pass` is capped at 8 characters by the protocol, so `ha_haproxy_vrrp_pass` is silently truncated above
       that.
-
-- [ ] Keepalived `unicast_peer` loop has no `else` (tracked as TODO 13).
 
 ## Execution log
 
