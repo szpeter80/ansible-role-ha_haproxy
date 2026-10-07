@@ -22,8 +22,7 @@ so it stays traceable to wherever it was raised.
       `haproxy.cfg.j2`. Cosmetic only — Ansible's `template` module searches both `<role>/templates/` and `<role>/`, so
       both forms resolve to the same file. An earlier review called this fragile, which overstated it.
 
-- [ ] TODO 10. Ensure `/etc/keepalived` exists before deploying `keepalived.conf` (add an `ansible.builtin.file` task
-      with `state: directory`). Today it only works because the RHEL package creates the directory.
+
 
 - [ ] TODO 11. Decouple VIPs from HAProxy binds: `haproxy.cfg.j2` hardcodes `bind
       lb-vip.ocp.example.com:{6443,22623,80,443}` while `ha_haproxy_vip_api` / `ha_haproxy_vip_ingress` are consumed
@@ -56,6 +55,10 @@ so it stays traceable to wherever it was raised.
       handled per family in the two firewall files.
 
 ## Done
+
+- [x] DONE 10. Guard the keepalived config dir (`9d55918`) — a `stat` plus `assert` before the template task, failing
+      with "does not exist" rather than a raw template error. Checked, not created: the role does not paper over a
+      broken package install.
 
 - [x] DONE 17. Wire up the dead `/etc/haproxy/conf.d` (`01040ee`) — `haproxy.cfg.j2` now ends with
       `includedir /etc/haproxy/conf.d` (after `defaults`, since includedir expands in place) and the four inline proxies
