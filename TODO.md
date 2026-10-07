@@ -49,9 +49,9 @@ so it stays traceable to wherever it was raised.
 
 - [x] DONE 9. Consistent template `src` paths (`34ee72f`) — both template tasks now use the `templates/` prefix. The
       direction was chosen deliberately: the explicit `templates/haproxy.cfg.j2` form was kept and the bare
-      `haproxy.cfg.j2` updated to match it, so the filename stays visible in the task. Zero behaviour change — `template`
-      searches both `<role>/templates/` and `<role>/`, so both forms resolve to the same file. An earlier review called
-      the inconsistency fragile, which overstated it.
+      `haproxy.cfg.j2` updated to match it, so the filename stays visible in the task. Zero behaviour change —
+      `template` searches both `<role>/templates/` and `<role>/`, so both forms resolve to the same file. An earlier
+      review called the inconsistency fragile, which overstated it.
 
 - [x] DONE 13. Fix the `unicast_peer` loop in `keepalived.conf.j2` (`4c4a443`) — peers are now matched by comparing
       `hostvars[host]['ansible_default_ipv4']['address']` against this host's `ansible_default_ipv4.address`, so
