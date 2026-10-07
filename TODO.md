@@ -7,17 +7,6 @@ so it stays traceable to wherever it was raised.
 
 ## Unsolved
 
-- [ ] TODO 4. `ssl-default-bind-ciphers PROFILE=SYSTEM` on the Debian family (`c4d8bd3`) — the two `global` lines are now
-      inside `{% if ansible_os_family == 'RedHat' %}`. `PROFILE=SYSTEM` is a Red Hat downstream patch, not upstream
-      HAProxy: zero mentions of `PROFILE`/`crypto-policies` in the HAProxy 3.2 configuration reference, and a reported
-      failure of `[ALERT] (111301): unable to set SSL cipher list to 'PROFILE=SYSTEM'`. Ubuntu's equivalent is to not
-      set a cipher list in haproxy at all and let OpenSSL defaults apply, tuned via `/etc/ssl/openssl.cnf`
-      (`system_default_sect`, `CipherString = DEFAULT:@SECLEVEL=2`). Correction to an earlier note: the
-      `crypto-policies` package IS available on Ubuntu 26.04 (resolute/universe) — installing it would not help, since
-      upstream haproxy does not implement the sentinel. Verified by rendering the template for both families: RedHat
-      emits both lines, Debian emits none. Ubuntu ships haproxy 3.2.9-1ubuntu2.2, not the 3.0.5 named in the template
-      header comment — that comment is now stale. Still UNVERIFIED against a running haproxy.
-
 - [ ] TODO 5. Refactor hardcoded `*.ocp.example.com` backends in `templates/haproxy.cfg.j2` into role variables (needed
       for real multi-distro testing). Overlaps TODO 11 — keep in one place.
 
@@ -35,6 +24,17 @@ so it stays traceable to wherever it was raised.
       the local host.
 
 ## Done
+
+- [x] DONE 4. `ssl-default-bind-ciphers PROFILE=SYSTEM` on the Debian family (`c4d8bd3`) — the two
+      `global` lines are now inside `{% if ansible_os_family == 'RedHat' %}`. `PROFILE=SYSTEM` is a Red Hat downstream
+      patch, not upstream HAProxy: zero mentions of `PROFILE`/`crypto-policies` in the HAProxy 3.2 configuration
+      reference, and a reported failure of `[ALERT] (111301): unable to set SSL cipher list to 'PROFILE=SYSTEM'`.
+      Ubuntu's equivalent is to not set a cipher list in haproxy at all and let OpenSSL defaults apply, tuned via
+      `/etc/ssl/openssl.cnf` (`system_default_sect`, `CipherString = DEFAULT:@SECLEVEL=2`). Correction to an earlier
+      note: the `crypto-policies` package IS available on Ubuntu 26.04 (resolute/universe) — installing it would not
+      help, since upstream haproxy does not implement the sentinel. Verified by rendering the template for both
+      families: RedHat emits both lines, Debian emits none. Ubuntu ships haproxy 3.2.9-1ubuntu2.2, not the 3.0.5 named
+      in the template header comment — that comment is now stale. Still UNVERIFIED against a running haproxy.
 
 - [x] DONE 18. `killall` dependency and pidfile path (`bb1d7b1`) — `psmisc` added to both per-family package tables,
       not just Debian: `killall` ships in `psmisc` on both, so the `chk_haproxy` track script was relying on a minimal
