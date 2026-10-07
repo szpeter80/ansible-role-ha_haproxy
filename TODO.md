@@ -64,8 +64,9 @@ so it stays traceable to wherever it was raised.
         Promote to role variables so they can differ per `os_family`.
 
 - [ ] TODO 21. Open VRRP in the firewall. Keepalived does not do this itself — `vrrp_iptables`/`vrrp_nftables` exist
-      only for `no_accept` mode and VMAC IGMP handling, nothing opens a hole for VRRP itself. VRRP is IP protocol 112, not
-      a port, so `ha_haproxy_fw_ports` (a list of `{port, proto}`) cannot carry it and the two backends need different
+      only for `no_accept` mode and VMAC IGMP handling, nothing opens a hole for VRRP itself. VRRP is IP protocol 112,
+      not a port, so `ha_haproxy_fw_ports` (a list of `{port, proto}`) cannot carry it and the two backends need
+      different
       syntax: firewalld wants a rich rule `rule protocol value="vrrp" accept`, while `community.general.ufw` accepts
       `proto: vrrp` (supported since community.general 10.3.0; 13.4.0 installed here, but the emitted rule is
       unverified). Failure mode is silent: adverts are dropped, no keepalived error, and failover quietly does not
