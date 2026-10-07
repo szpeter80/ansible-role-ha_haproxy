@@ -7,9 +7,16 @@ Status legend: `TODO` | `WIP` | `DONE`
 - [ ] TODO 1. OS-conditional package install: `ansible.builtin.apt` when
       `os_family == 'Debian'`, keep `dnf` for RedHat; add `rsyslog` to
       `vars/main.yml` packages (may be missing on minimal Ubuntu).
-- [ ] TODO 2. Gate SELinux tasks with
-      `when: ansible_selinux.status|default('disabled') == 'enabled'`
-      (seboolean + .te/compile/load chain in `tasks/main.yml`).
+- [x] DONE 2. Gate SELinux tasks. Done in `a534357` — added derived var
+      `ha_haproxy_selinux_enabled` in `defaults/main.yml`
+      (`ansible_selinux is defined and ansible_selinux.status == 'enabled'`)
+      and applied it to all five tasks (seboolean, .te, checkmodule,
+      semodule_package, semodule). The three compile/load tasks needed the
+      `ha_haproxy_selinux_enabled` condition added on top of their existing
+      `rsyslogd_selinux_policy.changed`, since that register is undefined when
+      the copy is skipped. Debian is a true skip, not an alternative path.
+      UNVERIFIED — no Ansible installed and no Debian target available, so
+      only YAML validity and var references were checked.
 - [ ] TODO 3. Firewall branch: install/enable firewalld on Debian family,
       or switch to `ufw`.
 - [ ] TODO 4. Verify `ssl-default-bind-ciphers PROFILE=SYSTEM` works with
