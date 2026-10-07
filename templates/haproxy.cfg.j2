@@ -7,7 +7,7 @@ global
     log         /rsyslog-socket {{ ha_haproxy_syslog_facility }}
 
     chroot      /var/lib/haproxy
-    pidfile     /var/run/haproxy.pid
+    pidfile     /run/haproxy.pid
     maxconn     100000
     user        haproxy
     group       haproxy

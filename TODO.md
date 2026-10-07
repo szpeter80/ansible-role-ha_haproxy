@@ -26,14 +26,12 @@ so it stays traceable to wherever it was raised.
       currently opened in `public` via `ha_haproxy_fw_ports` with no credentials, so reachable from anywhere, not just
       the local host.
 
-- [ ] TODO 18. Fix distro-sensitive absolute paths hardcoded in templates:
-
-      - `haproxy.cfg.j2:9` `chroot /var/lib/haproxy`
-      - `haproxy.cfg.j2:10` `pidfile /var/run/haproxy.pid` — Debian/Ubuntu use `/run/haproxy.pid`; same directory today,
-        but `/var/run` is a compat symlink and writing into it is deprecated
-      - `keepalived.conf.j2:5` `/usr/bin/killall` — `killall` ships in `psmisc` on Debian, not installed by default on
-        minimal Ubuntu. This one fails silently: VRRP priority stops adjusting and failover degrades with no error.
-        Promote to role variables so they can differ per `os_family`.
+- [ ] TODO 18. `killall` dependency and the legacy pidfile path. `keepalived.conf.j2:5` runs `/usr/bin/killall -0
+      haproxy`, but `killall` ships in `psmisc`, which is absent from minimal images on BOTH families — and the
+      failure is silent: the track script stops working, VRRP priority stops adjusting, failover degrades with no error
+      anywhere. `haproxy.cfg.j2:10` also uses `/var/run/haproxy.pid` where the FHS-correct spelling is `/run`.
+      Dropped from the original scope: `chroot /var/lib/haproxy`, the stats socket, and `/etc/haproxy/conf.d` are
+      identical on RedHat and Debian.
 
 ## Done
 

@@ -16,9 +16,11 @@ ha_haproxy_packages_by_os_family:
     - haproxy
     - keepalived
     - nc          # required by files/haproxy_stat.sh
+    - psmisc      # provides killall, used by the chk_haproxy track script
     - rsyslog     # config + restart handler depend on it
   Debian:
     - haproxy
     - keepalived
     - netcat-openbsd  # 'nc' is transitional on Debian family
+    - psmisc      # provides killall, used by the chk_haproxy track script
     - rsyslog
