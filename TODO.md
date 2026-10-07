@@ -7,11 +7,6 @@ so it stays traceable to wherever it was raised.
 
 ## Unsolved
 
-
-
-- [ ] TODO 3. Firewall branch: install/enable firewalld on Debian family, or switch to `ufw`. Now the first RHEL-only
-      task in the play after package install.
-
 - [ ] TODO 4. Verify `ssl-default-bind-ciphers PROFILE=SYSTEM` works with Ubuntu's OpenSSL 3 build; adjust template if
       not.
 
@@ -68,7 +63,23 @@ so it stays traceable to wherever it was raised.
         minimal Ubuntu. This one fails silently: VRRP priority stops adjusting and failover degrades with no error.
         Promote to role variables so they can differ per `os_family`.
 
+- [ ] TODO 21. Open VRRP in the firewall. Keepalived does not do this itself — `vrrp_iptables`/`vrrp_nftables` exist
+      only for `no_accept` mode and VMAC IGMP handling, nothing opens a hole for VRRP itself. VRRP is IP protocol 112, not
+      a port, so `ha_haproxy_fw_ports` (a list of `{port, proto}`) cannot carry it and the two backends need different
+      syntax: firewalld wants a rich rule `rule protocol value="vrrp" accept`, while `community.general.ufw` accepts
+      `proto: vrrp` (supported since community.general 10.3.0; 13.4.0 installed here, but the emitted rule is
+      unverified). Failure mode is silent: adverts are dropped, no keepalived error, and failover quietly does not
+      work. Same class as the `killall` problem in TODO 18. Consider a separate `ha_haproxy_fw_protocols` variable
+      handled per family in the two firewall files.
+
 ## Done
+
+- [x] DONE 3. Firewall branch (`78b5b1b`) — the single `ansible.posix.firewalld` task is now
+      `include_tasks: "firewall-{{ ansible_os_family }}.yml"`. RedHat keeps firewalld; Debian never installs it, and
+      uses `community.general.ufw` only when `ufw.service` is present and running/enabled (via `service_facts`),
+      otherwise reports the skip. `ha_haproxy_fw_ports` became structured `{port, proto}` so neither backend parses a
+      protocol out of a string — firewalld rejoins them as `{{ item.port }}/{{ item.proto }}`. No VRRP rule; that is
+      TODO 21. UNVERIFIED against any host.
 
 - [x] DONE 1. OS-conditional package install (`af05dd3`) — the install branches per `os_family` via
       `include_tasks` on `pkg-install-<Family>.yml`, with per-family package tables in `vars/main.yml` (`nc` on RedHat,
