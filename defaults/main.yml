@@ -26,4 +26,3 @@ ha_haproxy_fw_ports:
   - "443/tcp"     # https
   - 6443/tcp      # Kubernetes API
   - 22623/tcp     # Machine config server
-

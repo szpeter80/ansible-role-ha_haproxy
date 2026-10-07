@@ -47,7 +47,7 @@
     state: started
     enabled: true
 
-# Haproxy setup 
+# Haproxy setup
 
 - name: Set sysctl to bind non-local address
   become: true
@@ -96,7 +96,7 @@
     group: root
     mode: "0755"
 
-- name: Configure rsyslog for haproxy log 
+- name: Configure rsyslog for haproxy log
   become: true
   ansible.builtin.copy:
     dest: /etc/rsyslog.d/98-haproxy.conf
