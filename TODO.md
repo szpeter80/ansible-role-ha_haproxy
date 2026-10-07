@@ -7,9 +7,7 @@ so it stays traceable to wherever it was raised.
 
 ## Unsolved
 
-- [ ] TODO 1. OS-conditional package install. Partly done — the install now branches per `os_family` via `include_tasks`
-      on `pkg-install-<Family>.yml` (`af05dd3`), with per-family package tables in `vars/main.yml`. Still to verify
-      against a real Debian target: `netcat-openbsd` naming, and `keepalived` postinst behaviour.
+
 
 - [ ] TODO 3. Firewall branch: install/enable firewalld on Debian family, or switch to `ufw`. Now the first RHEL-only
       task in the play after package install.
@@ -71,6 +69,12 @@ so it stays traceable to wherever it was raised.
         Promote to role variables so they can differ per `os_family`.
 
 ## Done
+
+- [x] DONE 1. OS-conditional package install (`af05dd3`) — the install branches per `os_family` via
+      `include_tasks` on `pkg-install-<Family>.yml`, with per-family package tables in `vars/main.yml` (`nc` on RedHat,
+      `netcat-openbsd` on Debian, both adding `rsyslog`), plus a first-task assert that the family is in
+      `ha_haproxy_supported_os_families`. Closed as code-complete: no Debian target is available to verify against.
+      Target-side checks (`netcat-openbsd` naming, `keepalived` postinst) are carried by TODO 8.
 
 - [x] DONE 2. Gate SELinux tasks (`a534357`) — added derived var `ha_haproxy_selinux_enabled` in `defaults/main.yml`
       (`ansible_selinux is defined and ansible_selinux.status == 'enabled'`) and applied it to all five tasks
