@@ -55,6 +55,7 @@
     name: haproxy_connect_any
     state: true
     persistent: true
+  when: ha_haproxy_selinux_enabled | bool
 
 - name: Create conf.d for haproxy
   become: true
@@ -112,6 +113,7 @@
       allow syslogd_t haproxy_var_lib_t:sock_file { create setattr unlink };
     mode: '0600'
   register: rsyslogd_selinux_policy
+  when: ha_haproxy_selinux_enabled | bool
   notify:
     - Restart rsyslog
     - Restart haproxy
@@ -119,19 +121,25 @@
 - name: Compile SELinux module
   become: true
   ansible.builtin.command: checkmodule -M -m -o /root/rsyslog-haproxy.mod /root/rsyslog-haproxy.te
-  when: rsyslogd_selinux_policy.changed
+  when:
+    - ha_haproxy_selinux_enabled | bool
+    - rsyslogd_selinux_policy.changed | default(false)
   changed_when: true
 
 - name: Package SELinux module
   become: true
   ansible.builtin.command: semodule_package -o /root/rsyslog-haproxy.pp -m /root/rsyslog-haproxy.mod
-  when: rsyslogd_selinux_policy.changed
+  when:
+    - ha_haproxy_selinux_enabled | bool
+    - rsyslogd_selinux_policy.changed | default(false)
   changed_when: true
 
 - name: Load SELinux module
   become: true
   ansible.builtin.command: semodule -i /root/rsyslog-haproxy.pp
-  when: rsyslogd_selinux_policy.changed
+  when:
+    - ha_haproxy_selinux_enabled | bool
+    - rsyslogd_selinux_policy.changed | default(false)
   changed_when: true
 
 - name: Enable and start haproxy

@@ -10,6 +10,12 @@ ha_haproxy_vrrp_pass: 'dummy'
 ha_haproxy_syslog_facility: "local2"
 ha_haproxy_logfile: /var/log/haproxy.log
 
+# SELinux is RedHat-only; on Debian family the rsyslog socket under
+# /var/lib/haproxy is writable unconfined, so these tasks are skipped
+# rather than replaced by an alternative mechanism.
+ha_haproxy_selinux_enabled: >-
+  {{ ansible_selinux is defined and ansible_selinux.status == 'enabled' }}
+
 ha_haproxy_stat_port: 1936
 ha_haproxy_stat_uri: "/stats"
 
