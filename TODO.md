@@ -36,11 +36,7 @@ so it stays traceable to wherever it was raised.
       currently opened in `public` via `ha_haproxy_fw_ports` with no credentials, so reachable from anywhere, not just
       the local host.
 
-- [ ] TODO 17. Resolve the dead `/etc/haproxy/conf.d`: it is created by `tasks/main.yml` but nothing writes into it, and
-      `haproxy.cfg.j2` has no `includedir /etc/haproxy/conf.d` line — every proxy is hardcoded inline in the one
-      template. Either add `includedir` (which makes TODO 5 far cleaner: per-backend drop-ins instead of a monolith) or
-      drop the task. Highest-leverage item on this list — decide it before the Ubuntu port, since it decides whether
-      that port is a patch or a refactor.
+
 
 - [ ] TODO 18. Fix distro-sensitive absolute paths hardcoded in templates:
 
@@ -62,6 +58,16 @@ so it stays traceable to wherever it was raised.
       handled per family in the two firewall files.
 
 ## Done
+
+- [x] DONE 17. Wire up the dead `/etc/haproxy/conf.d` (`01040ee`) — `haproxy.cfg.j2` now ends with
+      `includedir /etc/haproxy/conf.d` (after `defaults`, since includedir expands in place) and the four inline proxies
+      moved to `templates/conf.d/{10-k8s-api,20-machine-config,30-http-ingress,40-https-ingress}.j2`, deployed in a
+      loop over the new `ha_haproxy_confd` list. Co-existence model by decision: the role writes only its own files and
+      leaves anything else in that directory alone, because content is expected to land there outside Ansible. Verified
+      the old inline proxy text and the new drop-ins are line-for-line identical apart from one rewrapped comment, so
+      the rendered config is functionally unchanged. CAVEAT: this is a breaking change on redeploy — if the drop-ins
+      land while `haproxy.cfg` still holds the old inline definitions, HAProxy sees duplicate frontends and refuses to
+      start. Run with `--check` on a live node first.
 
 - [x] DONE 15. Galaxy metadata and collection declaration — `meta/main.yml` scaffold replaced in `6115206` (author,
       MIT, `min_ansible_version "2.15"` quoted since unquoted 2.1 parsed as a float, platforms, galaxy_tags), clearing
