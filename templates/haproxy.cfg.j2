@@ -16,9 +16,11 @@ global
     # turn on stats unix socket
     stats socket /var/lib/haproxy/stats
 
+    {% if ansible_os_family == 'RedHat' %}
     # utilize system-wide crypto-policies
     ssl-default-bind-ciphers PROFILE=SYSTEM
     ssl-default-server-ciphers PROFILE=SYSTEM
+{% endif %}
 
 #---------------------------------------------------------------------
 # defaults for every 'listen' and 'backend' 
