@@ -76,6 +76,15 @@
   notify: Restart haproxy
   tags: haproxy_reconfig
 
+- name: Install haproxy stat helper
+  become: true
+  ansible.builtin.copy:
+    src: haproxy_stat.sh
+    dest: /root/haproxy_stat.sh
+    owner: root
+    group: root
+    mode: "0755"
+
 - name: Configure rsyslog for haproxy log 
   become: true
   ansible.builtin.copy:
