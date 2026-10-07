@@ -90,6 +90,19 @@ Status legend: `TODO` | `WIP` | `DONE`
       `ansible.posix` collection dependency instead of only documenting it
       in the README.
 
+- [ ] RETRACTED 20. ~~Create the `haproxy` user/group in the role~~ — NOT
+      NEEDED. An earlier review claimed Ubuntu's haproxy package does not
+      create the account, leaving `haproxy.cfg.j2:12-13` without one. That
+      was wrong. Verified: Debian/Ubuntu `haproxy.postinst` runs
+      `addgroup --gid 99 --system haproxy` + `adduser --uid 99 --home
+      /var/lib/haproxy`, creates `/var/lib/haproxy`, and chowns it to
+      `haproxy:haproxy`. Same account name on both distros, and
+      `/var/lib/haproxy` ownership matches — so `chroot` and the stats
+      socket may work on Ubuntu unchanged.
+      Residual risk only: uid/gid 99 is pinned, so the package fails to
+      configure if 99 is already taken (Debian bug #939470). Not a role
+      defect. No action.
+
 ## Known gaps (out of scope unless requested)
 
 - [ ] Stats page binds `:1936` with no authentication (firewall-opened).
