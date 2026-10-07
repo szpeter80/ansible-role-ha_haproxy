@@ -32,8 +32,6 @@ so it stays traceable to wherever it was raised.
 - [ ] TODO 13. Add `{% else %}` to the `unicast_peer` loop in `keepalived.conf.j2` so a `ansible_nodename` /
       inventory-hostname mismatch fails loudly instead of emitting blank lines.
 
-
-
 - [ ] TODO 16. Autenticate the stats listener on `:1936` (or at minimum bind it to the management interface). It is
       currently opened in `public` via `ha_haproxy_fw_ports` with no credentials, so reachable from anywhere, not just
       the local host.
