@@ -10,8 +10,6 @@ so it stays traceable to wherever it was raised.
 - [ ] TODO 5. Refactor hardcoded `*.ocp.example.com` backends in `templates/haproxy.cfg.j2` into role variables (needed
       for real multi-distro testing). Overlaps TODO 11 — keep in one place.
 
-- [ ] TODO 22. Move the five `ha_haproxy_selinux_enabled`-gated tasks out of `tasks/main.yml` into a dedicated
-      `tasks/selinux.yml`, included conditionally from `main.yml`.
 
 - [ ] TODO 7. Add Ubuntu test inventory/playbook under `tests/`. The current `tests/test.yml` targets `localhost` with
       no variables set, so `ha_haproxy_vip_api` renders empty and `groups['g_ha_haproxy']` fails outright.
@@ -27,6 +25,16 @@ so it stays traceable to wherever it was raised.
       the local host.
 
 ## Done
+
+- [x] DONE 22. Group the five SELinux tasks into `tasks/selinux.yml` (`9d3c0c1`) — `seboolean`, the `.te` copy,
+      `checkmodule`, `semodule_package` and `semodule` moved out of `main.yml` into `tasks/selinux.yml`, which
+      `main.yml` includes under `when: ha_haproxy_selinux_enabled | bool`. The include's `when` is inherited by
+      every task in the file, so the per-task family gates dropped; the three command tasks keep their
+      `rsyslogd_selinux_policy.changed` gate, which is a different concern (only recompile when the `.te` changed).
+      The register `rsyslogd_selinux_policy` is set and consumed entirely inside the new file, so no cross-file
+      dependency. Behaviour-identical on RedHat: same tasks, same relative order; the `seboolean` just runs after
+      the rsyslog config instead of before the conf.d task, which is neutral because its effect only takes hold on
+      the haproxy restart handler. On Debian the five `skipped` lines collapse into one skipped include.
 
 - [x] DONE 4. `ssl-default-bind-ciphers PROFILE=SYSTEM` on the Debian family (`c4d8bd3`) — the two
       `global` lines are now inside `{% if ansible_os_family == 'RedHat' %}`. `PROFILE=SYSTEM` is a Red Hat downstream
