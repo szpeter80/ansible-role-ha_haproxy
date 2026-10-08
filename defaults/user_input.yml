@@ -1,0 +1,61 @@
+---
+ha_haproxy_cfg:
+  
+ # description of this ip/domain  
+  - name: OpenShift Kubernetes API + Machine Config Server
+    vip_ip: 192.168.1.1
+    vip_domain: api.mycluster.example.com
+    vrrp_password: secret1
+    haproxy_listen:
+
+      - name: ocp_kubernetes_api
+        use_template: openshift_kubernetes_api.j2
+        bind_to_ip: false
+        listen_port: 6443
+        # add_resolvers implies the 'init-addr none' if dns is used
+        backend_server_pool_members: [
+          { enabled: true, name: bootstrap, host: bootstrap.ocp.example.com, port: 6443, add_resolvers: true },
+          { enabled: true, name: master1,   host: master1.ocp.example.com,   port: 6443, add_resolvers: true },
+          { enabled: true, name: master2,   host: master2.ocp.example.com,   port: 6443, add_resolvers: true },
+          { enabled: true, name: master3,   host: master3.ocp.example.com,   port: 6443, add_resolvers: true }
+        ]
+
+      - name: ocp_machine_config_server
+        use_template: openshift_machine_config_server.j2
+        bind_to_ip: false
+        listen_port: 22623
+        backend_server_pool_members: [
+          { enabled: true, name: bootstrap, host: bootstrap.ocp.example.com, port: 22623, add_resolvers: true },
+          { enabled: true, name: master1,   host: master1.ocp.example.com,   port: 22623, add_resolvers: true },
+          { enabled: true, name: master2,   host: master2.ocp.example.com,   port: 22623, add_resolvers: true },
+          { enabled: true, name: master3,   host: master3.ocp.example.com,   port: 22623, add_resolvers: true }
+        ]
+
+  - name: OpenShift Ingress (HTTP/S)
+    vip_ip: 192.168.1.2
+    vip_domain: lb-vip-ingress.mycluster.example.com
+    vrrp_password: secret2
+    haproxy_listen:
+
+      - name: ocp_http_ingress
+        use_template: openshift_http_ingress.j2
+        bind_to_ip: false
+        listen_port: 80
+        # add_resolvers implies the 'init-addr none' if dns is used
+        backend_server_pool_members: [
+          { enabled: true, name: bootstrap, host: bootstrap.ocp.example.com, port: 80, add_resolvers: true },
+          { enabled: true, name: master1,   host: master1.ocp.example.com,   port: 80, add_resolvers: true },
+          { enabled: true, name: master2,   host: master2.ocp.example.com,   port: 80, add_resolvers: true },
+          { enabled: true, name: master3,   host: master3.ocp.example.com,   port: 80, add_resolvers: true }
+        ]
+
+      - name: ocp_https_ingress
+        use_template: openshift_https_ingress.j2
+        bind_to_ip: false
+        listen_port: 443
+        backend_server_pool_members: [
+          { enabled: true, name: bootstrap, host: bootstrap.ocp.example.com, port: 443, add_resolvers: true },
+          { enabled: true, name: master1,   host: master1.ocp.example.com,   port: 443, add_resolvers: true },
+          { enabled: true, name: master2,   host: master2.ocp.example.com,   port: 443, add_resolvers: true },
+          { enabled: true, name: master3,   host: master3.ocp.example.com,   port: 443, add_resolvers: true }
+        ]

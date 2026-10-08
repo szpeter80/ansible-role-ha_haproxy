@@ -1,4 +1,5 @@
-frontend ocp_https_ingress
+# Ingress can be on masters (compact cluster), on some or all workers, or on dedicated infra nodes.
+listen ocp_https_ingress
     bind lb-vip.ocp.example.com:443
 
     mode tcp

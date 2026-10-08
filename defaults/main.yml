@@ -14,7 +14,6 @@ ha_haproxy_logfile: /var/log/haproxy.log
 
 ####################### to be refactored soon
 
-
 # Set this to true on exactly one host in the [g_ha_haproxy] group.
 # That host gets VRRP state MASTER / priority 101, the rest get BACKUP / 100.
 ha_haproxy_is_primary: false

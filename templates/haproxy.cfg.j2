@@ -16,7 +16,7 @@ global
     # turn on stats unix socket
     stats socket /var/lib/haproxy/stats
 
-    {% if ansible_os_family == 'RedHat' %}
+{% if ansible_os_family == 'RedHat' %}
     # utilize system-wide crypto-policies
     ssl-default-bind-ciphers PROFILE=SYSTEM
     ssl-default-server-ciphers PROFILE=SYSTEM
@@ -58,8 +58,6 @@ listen stats
     stats refresh 10s
 
 #---------------------------------------------------------------------
-# Proxy definitions live in /etc/haproxy/conf.d, one file per frontend or
-# listen, deployed by this role as conf.d/<name>.cfg. Files placed there by
-# other means are left alone and are also loaded.
+# Proxy definitions to /etc/haproxy/conf.d
 #---------------------------------------------------------------------
     includedir /etc/haproxy/conf.d
