@@ -10,9 +10,6 @@ so it stays traceable to wherever it was raised.
 - [ ] TODO 5. Refactor hardcoded `*.ocp.example.com` backends in `templates/haproxy.cfg.j2` into role variables (needed
       for real multi-distro testing). Overlaps TODO 11 — keep in one place.
 
-
-
-
 - [ ] TODO 7. Add Ubuntu test inventory/playbook under `tests/`. The current `tests/test.yml` targets `localhost` with
       no variables set, so `ha_haproxy_vip_api` renders empty and `groups['g_ha_haproxy']` fails outright.
 
@@ -27,6 +24,16 @@ so it stays traceable to wherever it was raised.
       the local host.
 
 ## Done
+
+- [x] DONE 25. Move the keepalived tasks into `tasks/keepalived.yml` — the stat/assert/template/systemd block now
+      lives in its own file, included from `main.yml` as `Configure keepalived`. The `keepalived_reconfig` tag
+      moved from the template task onto the include, making the whole file the tag scope: `--tags
+      keepalived_reconfig` now also runs the systemd task (previously it ran stat/assert/template and skipped
+      enable/start, relying on the handler). Tag semantics verified empirically on a scratch role with this
+      Ansible (2.21.4): a tag on an `include_tasks` makes every task in the included file part of its scope, and
+      tags placed on tasks inside included files are ignored for selection, so the template's old inner tag was
+      dropped as dead weight. Also collapsed two pre-existing double blanks in this file, left over from earlier
+      open/close commits.
 
 - [x] DONE 24. Move the SELinux include up (`eba1ebe`) — `include_tasks: selinux.yml` now sits right after the firewall
       include instead of after the rsyslog config. Dependency-checked: everything the SELinux tasks need (the

@@ -26,33 +26,9 @@
 
 # Keepalived setup
 
-- name: Verify keepalived config dir exists
-  ansible.builtin.stat:
-    path: /etc/keepalived
-  register: ha_haproxy_keepalived_dir
-
-- name: Assert keepalived config dir exists
-  ansible.builtin.assert:
-    that: ha_haproxy_keepalived_dir.stat.exists
-    fail_msg: /etc/keepalived does not exist
-
-- name: Deploy keepalived config
-  become: true
-  ansible.builtin.template:
-    src: templates/keepalived.conf.j2
-    dest: /etc/keepalived/keepalived.conf
-    owner: root
-    group: root
-    mode: "0644"
-  notify: Restart keepalived
+- name: Configure keepalived
+  ansible.builtin.include_tasks: keepalived.yml
   tags: keepalived_reconfig
-
-- name: Enable and start keepalived
-  become: true
-  ansible.builtin.systemd:
-    name: keepalived
-    state: started
-    enabled: true
 
 # Haproxy setup
 
