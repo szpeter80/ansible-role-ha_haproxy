@@ -10,8 +10,6 @@ so it stays traceable to wherever it was raised.
 - [ ] TODO 5. Refactor hardcoded `*.ocp.example.com` backends in `templates/haproxy.cfg.j2` into role variables (needed
       for real multi-distro testing). Overlaps TODO 11 — keep in one place.
 
-- [ ] TODO 23. `.gitignore` is tracked but empty, so the untracked `.ansible/` ansible-lint cache created in the role
-      root on every lint run pollutes `git status`.
 
 
 - [ ] TODO 7. Add Ubuntu test inventory/playbook under `tests/`. The current `tests/test.yml` targets `localhost` with
@@ -28,6 +26,11 @@ so it stays traceable to wherever it was raised.
       the local host.
 
 ## Done
+
+- [x] DONE 23. Ignore the `.ansible/` lint cache (`b750626`) — the tracked `.gitignore` was empty, so the cache
+      ansible-lint drops in the role root on every run showed up as an untracked file in `git status` (it is
+      hardcoded in ansible-lint's own exclusion spec, `file_utils.py`, so it is never linted — pure noise). One
+      line: `.ansible/`. Scope kept minimal; no speculative entries for caches this repo does not produce.
 
 - [x] DONE 22. Group the five SELinux tasks into `tasks/selinux.yml` (`9d3c0c1`) — `seboolean`, the `.te` copy,
       `checkmodule`, `semodule_package` and `semodule` moved out of `main.yml` into `tasks/selinux.yml`, which
