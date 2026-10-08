@@ -10,6 +10,9 @@ so it stays traceable to wherever it was raised.
 - [ ] TODO 5. Refactor hardcoded `*.ocp.example.com` backends in `templates/haproxy.cfg.j2` into role variables (needed
       for real multi-distro testing). Overlaps TODO 11 — keep in one place.
 
+- [ ] TODO 23. `.gitignore` is tracked but empty, so the untracked `.ansible/` ansible-lint cache created in the role
+      root on every lint run pollutes `git status`.
+
 
 - [ ] TODO 7. Add Ubuntu test inventory/playbook under `tests/`. The current `tests/test.yml` targets `localhost` with
       no variables set, so `ha_haproxy_vip_api` renders empty and `groups['g_ha_haproxy']` fails outright.
