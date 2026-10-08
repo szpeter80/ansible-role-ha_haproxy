@@ -20,6 +20,10 @@
 - name: Configure firewall
   ansible.builtin.include_tasks: "firewall-{{ ansible_os_family }}.yml"
 
+- name: Configure SELinux
+  ansible.builtin.include_tasks: selinux.yml
+  when: ha_haproxy_selinux_enabled | bool
+
 # Keepalived setup
 
 - name: Verify keepalived config dir exists
@@ -114,10 +118,6 @@
       $AddUnixListenSocket /var/lib/haproxy/rsyslog-socket
       {{ ha_haproxy_syslog_facility }}.* action(type="omfile" file="{{ ha_haproxy_logfile }}")
   notify: Restart rsyslog
-
-- name: Configure SELinux
-  ansible.builtin.include_tasks: selinux.yml
-  when: ha_haproxy_selinux_enabled | bool
 
 - name: Enable and start haproxy
   become: true
