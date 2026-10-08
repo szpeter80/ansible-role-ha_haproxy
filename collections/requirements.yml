@@ -2,9 +2,6 @@
 # Collections required by this role. Install before running:
 #   ansible-galaxy collection install -r collections/requirements.yml
 #
-# Declared here rather than in meta/main.yml `dependencies:` on purpose:
-# a role dependency triggers a Galaxy fetch during the play, which fails on
-# an air-gapped controller. Requirements are resolved once, up front.
 collections:
   - name: ansible.posix      # firewalld, seboolean, sysctl
   - name: community.general  # ufw (Debian family)

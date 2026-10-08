@@ -1,7 +1,5 @@
 ---
-# Debian family: never install firewalld. ufw is used only if it is already
-# present and enabled/running; otherwise there is nothing to open and we say
-# so rather than installing a firewall the operator did not ask for.
+# Debian family firewall tasks
 
 - name: Gather service facts
   ansible.builtin.service_facts:

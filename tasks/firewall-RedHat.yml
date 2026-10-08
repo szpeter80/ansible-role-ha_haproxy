@@ -1,4 +1,6 @@
 ---
+# RedHat family firewall tasks
+
 - name: Open firewall ports
   become: true
   ansible.posix.firewalld:
@@ -9,8 +11,7 @@
     port: "{{ item.port }}/{{ item.proto }}"
   loop: "{{ ha_haproxy_fw_ports }}"
 
-# VRRP is IP protocol 112, not a port, so it needs its own rule. Keepalived does
-# not open this itself.
+# VRRP is IP protocol #112
 - name: Open VRRP between the keepalived nodes
   become: true
   ansible.posix.firewalld:

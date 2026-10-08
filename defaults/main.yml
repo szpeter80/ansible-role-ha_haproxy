@@ -1,6 +1,20 @@
 ---
 # defaults file for ha_haproxy
 
+# Only on RedHat systems. Please keep it enabled.
+ha_haproxy_selinux_enabled: >-
+  {{ ansible_selinux is defined and ansible_selinux.status == 'enabled' }}
+
+ha_haproxy_stat_port: 1936
+ha_haproxy_stat_uri: "/stats"
+
+ha_haproxy_syslog_facility: "local2"
+ha_haproxy_logfile: /var/log/haproxy.log
+
+
+####################### to be refactored soon
+
+
 # Set this to true on exactly one host in the [g_ha_haproxy] group.
 # That host gets VRRP state MASTER / priority 101, the rest get BACKUP / 100.
 ha_haproxy_is_primary: false
@@ -8,21 +22,8 @@ ha_haproxy_is_primary: false
 ha_haproxy_vip_api: ""        # virtual ip for incoming traffic (API)
 ha_haproxy_vip_ingress: ""    # virtual ip for incoming traffic (Ingress)
 ha_haproxy_vrrp_pass: 'dummy'
-ha_haproxy_syslog_facility: "local2"
-ha_haproxy_logfile: /var/log/haproxy.log
 
-# SELinux is RedHat-only; on Debian family the rsyslog socket under
-# /var/lib/haproxy is writable unconfined, so these tasks are skipped
-# rather than replaced by an alternative mechanism.
-ha_haproxy_selinux_enabled: >-
-  {{ ansible_selinux is defined and ansible_selinux.status == 'enabled' }}
-
-ha_haproxy_stat_port: 1936
-ha_haproxy_stat_uri: "/stats"
-
-# Proxy fragments deployed into /etc/haproxy/conf.d and loaded via
-# "includedir". The role writes only these files and leaves anything else in
-# that directory untouched — content is expected to land there outside Ansible.
+# Generated proxy config in /etc/haproxy/conf.d
 ha_haproxy_confd:
   - 10-k8s-api.cfg
   - 20-machine-config.cfg
@@ -30,9 +31,6 @@ ha_haproxy_confd:
   - 40-https-ingress.cfg
 
 ha_haproxy_fw_ports:
-  # Structured rather than "80/tcp" strings so neither the firewalld nor the
-  # ufw task has to parse a protocol back out of a port. firewalld re-joins
-  # them as "{{ item.port }}/{{ item.proto }}".
   - port: "{{ ha_haproxy_stat_port }}"   # haproxy stat
     proto: tcp
   - port: 80        # http
