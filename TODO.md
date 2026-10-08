@@ -25,6 +25,13 @@ so it stays traceable to wherever it was raised.
 
 ## Done
 
+- [x] DONE 26. Move the haproxy setup tasks into `tasks/haproxy.yml` — the sysctl, conf.d dir, `haproxy.cfg`
+      template, conf.d fragments loop, stat helper, rsyslog config and haproxy start now live in their own file,
+      included from `main.yml` as `Configure haproxy`. The `haproxy_reconfig` tag moved from the two template
+      tasks onto the include, so a tagged run now covers the whole file (sysctl, dirs, helper, rsyslog config,
+      service state) instead of only the two template deploys; normal runs keep the identical task sequence.
+      The rsyslog config task's `notify: Restart rsyslog` works unchanged from the included file.
+
 - [x] DONE 25. Move the keepalived tasks into `tasks/keepalived.yml` — the stat/assert/template/systemd block now
       lives in its own file, included from `main.yml` as `Configure keepalived`. The `keepalived_reconfig` tag
       moved from the template task onto the include, making the whole file the tag scope: `--tags
