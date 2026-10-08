@@ -1,0 +1,51 @@
+---
+# SELinux tasks. Included from main.yml only when ha_haproxy_selinux_enabled
+# is true; the include carries the "when", which every task here inherits,
+# so no task repeats family gating.
+
+- name: Setsebool permanent any connect
+  become: true
+  ansible.posix.seboolean:
+    name: haproxy_connect_any
+    state: true
+    persistent: true
+
+- name: Create SELinux type enforcement file
+  become: true
+  ansible.builtin.copy:
+    dest: /root/rsyslog-haproxy.te
+    content: |
+      module rsyslog-haproxy 2.0;
+
+      require {
+              type syslogd_t;
+              type haproxy_var_lib_t;
+              class dir { add_name remove_name write search };
+              class sock_file { create setattr unlink };
+      }
+
+      allow syslogd_t haproxy_var_lib_t:dir { add_name remove_name write search };
+      allow syslogd_t haproxy_var_lib_t:sock_file { create setattr unlink };
+    mode: '0600'
+  register: rsyslogd_selinux_policy
+  notify:
+    - Restart rsyslog
+    - Restart haproxy
+
+- name: Compile SELinux module
+  become: true
+  ansible.builtin.command: checkmodule -M -m -o /root/rsyslog-haproxy.mod /root/rsyslog-haproxy.te
+  when: rsyslogd_selinux_policy.changed | default(false)
+  changed_when: true
+
+- name: Package SELinux module
+  become: true
+  ansible.builtin.command: semodule_package -o /root/rsyslog-haproxy.pp -m /root/rsyslog-haproxy.mod
+  when: rsyslogd_selinux_policy.changed | default(false)
+  changed_when: true
+
+- name: Load SELinux module
+  become: true
+  ansible.builtin.command: semodule -i /root/rsyslog-haproxy.pp
+  when: rsyslogd_selinux_policy.changed | default(false)
+  changed_when: true

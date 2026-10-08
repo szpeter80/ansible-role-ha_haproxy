@@ -62,14 +62,6 @@
     state: present
     sysctl_set: true
 
-- name: Setsebool permanent any connect
-  become: true
-  ansible.posix.seboolean:
-    name: haproxy_connect_any
-    state: true
-    persistent: true
-  when: ha_haproxy_selinux_enabled | bool
-
 - name: Create conf.d for haproxy
   become: true
   ansible.builtin.file:
@@ -123,52 +115,9 @@
       {{ ha_haproxy_syslog_facility }}.* action(type="omfile" file="{{ ha_haproxy_logfile }}")
   notify: Restart rsyslog
 
-- name: Create SELinux type enforcement file
-  become: true
-  ansible.builtin.copy:
-    dest: /root/rsyslog-haproxy.te
-    content: |
-      module rsyslog-haproxy 2.0;
-
-      require {
-              type syslogd_t;
-              type haproxy_var_lib_t;
-              class dir { add_name remove_name write search };
-              class sock_file { create setattr unlink };
-      }
-
-      allow syslogd_t haproxy_var_lib_t:dir { add_name remove_name write search };
-      allow syslogd_t haproxy_var_lib_t:sock_file { create setattr unlink };
-    mode: '0600'
-  register: rsyslogd_selinux_policy
+- name: Configure SELinux
+  ansible.builtin.include_tasks: selinux.yml
   when: ha_haproxy_selinux_enabled | bool
-  notify:
-    - Restart rsyslog
-    - Restart haproxy
-
-- name: Compile SELinux module
-  become: true
-  ansible.builtin.command: checkmodule -M -m -o /root/rsyslog-haproxy.mod /root/rsyslog-haproxy.te
-  when:
-    - ha_haproxy_selinux_enabled | bool
-    - rsyslogd_selinux_policy.changed | default(false)
-  changed_when: true
-
-- name: Package SELinux module
-  become: true
-  ansible.builtin.command: semodule_package -o /root/rsyslog-haproxy.pp -m /root/rsyslog-haproxy.mod
-  when:
-    - ha_haproxy_selinux_enabled | bool
-    - rsyslogd_selinux_policy.changed | default(false)
-  changed_when: true
-
-- name: Load SELinux module
-  become: true
-  ansible.builtin.command: semodule -i /root/rsyslog-haproxy.pp
-  when:
-    - ha_haproxy_selinux_enabled | bool
-    - rsyslogd_selinux_policy.changed | default(false)
-  changed_when: true
 
 - name: Enable and start haproxy
   become: true
