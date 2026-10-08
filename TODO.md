@@ -12,6 +12,7 @@ so it stays traceable to wherever it was raised.
 
 
 
+
 - [ ] TODO 7. Add Ubuntu test inventory/playbook under `tests/`. The current `tests/test.yml` targets `localhost` with
       no variables set, so `ha_haproxy_vip_api` renders empty and `groups['g_ha_haproxy']` fails outright.
 
@@ -26,6 +27,14 @@ so it stays traceable to wherever it was raised.
       the local host.
 
 ## Done
+
+- [x] DONE 24. Move the SELinux include up (`eba1ebe`) — `include_tasks: selinux.yml` now sits right after the firewall
+      include instead of after the rsyslog config. Dependency-checked: everything the SELinux tasks need (the
+      `haproxy_connect_any` boolean and `haproxy_var_lib_t` from the `haproxy` package, `checkmodule`/`semodule`
+      from `policycoreutils`/`checkpolicy` which ship with `selinux-policy`) is in place after the package install
+      that precedes both positions, and no later task consumes their output at task level — the boolean and the
+      rsyslog `.te` module both only matter at runtime, on the end-of-play handlers. New benefit: a policy
+      compile/load failure now aborts before any config file is deployed, instead of after.
 
 - [x] DONE 23. Ignore the `.ansible/` lint cache (`b750626`) — the tracked `.gitignore` was empty, so the cache
       ansible-lint drops in the role root on every run showed up as an untracked file in `git status` (it is
