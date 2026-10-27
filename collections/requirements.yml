@@ -1,0 +1,8 @@
+---
+# Collections required by this role. Install before running:
+#   ansible-galaxy collection install -r collections/requirements.yml
+#
+collections:
+  - name: ansible.posix      # firewalld, seboolean, sysctl
+  - name: community.general  # ufw (Debian family)
+  - name: ansible.utils      # ip address detection

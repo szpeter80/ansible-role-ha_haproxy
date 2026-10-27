@@ -1,0 +1,28 @@
+---
+# vars file for ha_haproxy
+
+# os_families this role is tested against. tasks/main.yml asserts the target
+# is one of them before doing anything. Extend both lists together when adding
+# a family: this one and ha_haproxy_packages_by_os_family below.
+ha_haproxy_supported_os_families:
+  - RedHat
+  - Debian
+
+# Packages required per os_family. ansible_os_family is the pivot for the
+# whole role: it also selects the package manager (see tasks/main.yml) and
+# gates the SELinux and firewall branches.
+ha_haproxy_packages_by_os_family:
+  RedHat:
+    - haproxy
+    - keepalived
+    - nc          # required by files/haproxy_stat.sh
+    - psmisc      # provides killall, used by the chk_haproxy track script
+    - rsyslog     # config + restart handler depend on it
+    - checkpolicy            # SELinux policy build tools
+    - policycoreutils-devel  # SELinux policy build tools
+  Debian:
+    - haproxy
+    - keepalived
+    - netcat-openbsd  # 'nc' is transitional on Debian family
+    - psmisc      # provides killall, used by the chk_haproxy track script
+    - rsyslog

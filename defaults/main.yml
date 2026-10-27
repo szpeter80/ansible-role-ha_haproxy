@@ -1,0 +1,18 @@
+---
+# defaults file for ha_haproxy
+
+# Only on RedHat systems. Please keep it enabled.
+ha_haproxy_selinux_enabled: >-
+  {{ ansible_selinux is defined and ansible_selinux.status == 'enabled' }}
+
+ha_haproxy_stat_bind_address: "127.0.0.1"
+ha_haproxy_stat_port: 1936
+ha_haproxy_stat_uri: "/stats"
+
+# Basic auth for the stats listener
+# Empty password = unauthenticated.
+ha_haproxy_stat_user: stats
+ha_haproxy_stat_password: ""
+
+ha_haproxy_syslog_facility: "local2"
+ha_haproxy_logfile: /var/log/haproxy.log

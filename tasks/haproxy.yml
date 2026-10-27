@@ -1,0 +1,113 @@
+---
+- name: Set sysctl to bind non-local address
+  become: true
+  ansible.posix.sysctl:
+    name: net.ipv4.ip_nonlocal_bind
+    value: '1'
+    reload: true
+    sysctl_file: /etc/sysctl.d/98-haproxy.conf
+    state: present
+    sysctl_set: true
+
+- name: Set sysctl to bind non-local IPv6 addresses
+  become: true
+  ansible.posix.sysctl:
+    name: net.ipv6.ip_nonlocal_bind
+    value: '1'
+    reload: true
+    sysctl_file: /etc/sysctl.d/98-haproxy.conf
+    state: present
+    sysctl_set: true
+  when: >-
+    ha_haproxy_cfg
+    | selectattr('vip_ip', 'search', ':')
+    | list
+    | length > 0
+
+- name: Create conf.d for haproxy
+  become: true
+  ansible.builtin.file:
+    path: "/etc/haproxy/conf.d"
+    owner: root
+    group: root
+    mode: "0755"
+    state: directory
+
+- name: Deploy config for haproxy
+  become: true
+  ansible.builtin.template:
+    src: templates/haproxy.cfg.j2
+    dest: "/etc/haproxy/haproxy.cfg"
+    owner: root
+    group: root
+    mode: "{{ '0600' if ha_haproxy_stat_password else '0644' }}"
+    validate: "/usr/sbin/haproxy -c -f %s -f /etc/haproxy/conf.d"
+  notify: Restart haproxy
+
+# One file per haproxy_listen, derived from ha_haproxy_cfg
+# Existing entries preserved
+- name: Deploy haproxy proxy fragments to conf.d
+  become: true
+  ansible.builtin.template:
+    src: "conf.d/{{ item.listen.use_template }}"
+    dest: "/etc/haproxy/conf.d/{{ item.listen.name }}.cfg"
+    owner: root
+    group: root
+    mode: "0644"
+    validate: "/usr/sbin/haproxy -c -f /etc/haproxy/haproxy.cfg -f %s"
+  vars:
+    vip_context: "{{ item.vip_context }}"
+    listen: "{{ item.listen }}"
+  loop: "{{ ha_haproxy_listens }}"
+  notify: Restart haproxy
+
+- name: Create HAProxy systemd drop-in directory
+  become: true
+  ansible.builtin.file:
+    path: /etc/systemd/system/haproxy.service.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  when: ansible_os_family == 'Debian'
+
+- name: Configure HAProxy to load conf.d
+  become: true
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/haproxy.service.d/conf-d.conf
+    content: |
+      [Service]
+      Environment="CONFIG=/etc/haproxy/haproxy.cfg -f /etc/haproxy/conf.d"
+    owner: root
+    group: root
+    mode: "0644"
+  when: ansible_os_family == 'Debian'
+  notify: Restart haproxy
+
+- name: Install haproxy stat helper
+  become: true
+  ansible.builtin.copy:
+    src: haproxy_stat.sh
+    dest: /root/haproxy_stat.sh
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Configure rsyslog for haproxy log
+  become: true
+  ansible.builtin.copy:
+    dest: /etc/rsyslog.d/98-haproxy.conf
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      $AddUnixListenSocket /var/lib/haproxy/rsyslog-socket
+      {{ ha_haproxy_syslog_facility }}.* action(type="omfile" file="{{ ha_haproxy_logfile }}")
+  notify: Restart rsyslog
+
+- name: Enable and start haproxy
+  become: true
+  ansible.builtin.systemd:
+    name: haproxy
+    state: started
+    enabled: true

@@ -1,0 +1,46 @@
+---
+# Debian family firewall tasks
+
+- name: Check whether UFW is active
+  become: true
+  ansible.builtin.command: ufw status
+  environment:
+    LC_ALL: C
+  register: ha_haproxy_ufw_status
+  changed_when: false
+  failed_when: false
+
+- name: Set whether UFW is usable
+  ansible.builtin.set_fact:
+    ha_haproxy_ufw_usable: >-
+      {{ ha_haproxy_ufw_status.rc == 0
+         and 'Status: active' in ha_haproxy_ufw_status.stdout }}
+
+- name: Report that no firewall is active
+  ansible.builtin.debug:
+    msg: >-
+      No usable firewall found (ufw absent, or neither enabled nor running).
+      Skipping {{ ha_haproxy_fw_ports | length }} port rule(s) — open them
+      manually if this host is meant to be filtered. firewalld is
+      deliberately never installed on the Debian family.
+  when: not ha_haproxy_ufw_usable | bool
+
+- name: Open firewall ports with ufw
+  become: true
+  community.general.ufw:
+    rule: allow
+    to_port: "{{ item.port }}"
+    proto: "{{ item.proto }}"
+    direction: "{{ 'in' }}"
+  loop: "{{ ha_haproxy_fw_ports }}"
+  when: ha_haproxy_ufw_usable | bool
+
+# VRRP is IP protocol 112, not a port, so it needs its own rule. Keepalived does
+# not open this itself.
+- name: Open VRRP between the keepalived nodes
+  become: true
+  community.general.ufw:
+    rule: allow
+    proto: vrrp
+    direction: "{{ 'in' }}"
+  when: ha_haproxy_ufw_usable | bool

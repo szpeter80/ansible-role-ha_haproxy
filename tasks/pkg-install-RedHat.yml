@@ -1,0 +1,8 @@
+---
+# RedHat family package tasks
+
+- name: Install required packages
+  become: true
+  ansible.builtin.dnf:
+    name: "{{ ha_haproxy_packages_by_os_family['RedHat'] }}"
+    state: present

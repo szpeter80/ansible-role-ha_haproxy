@@ -1,0 +1,29 @@
+---
+galaxy_info:
+  author: Peter Szabo
+  namespace: szpeter80
+  role_name: ha_haproxy
+  description: Active/passive Keepalived + HAProxy pair
+  license: MIT
+
+  # FQCN module names (ansible.builtin.*, ansible.posix.*) require 2.10+;
+  # 2.15 is the chosen modern baseline for the collections used here.
+  min_ansible_version: "2.15"
+
+  platforms:
+    - name: EL
+      versions:
+        - all
+    - name: Ubuntu
+      versions:
+        - all
+
+  galaxy_tags:
+    - haproxy
+    - keepalived
+    - highavailability
+    - openshift
+
+# No role dependencies: collections are declared in
+# collections/requirements.yml instead, so nothing is fetched during a play.
+dependencies: []

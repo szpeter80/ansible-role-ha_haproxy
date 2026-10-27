@@ -1,0 +1,14 @@
+{# IPv6 literals need brackets around the address in haproxy #}
+{%- set bind_host = ('[' ~ vip_context.vip_ip ~ ']' if (listen.bind_to_ip and ':' in vip_context.vip_ip)
+                     else (vip_context.vip_ip if listen.bind_to_ip else vip_context.vip_domain)) -%}
+listen {{ listen.name }}
+    bind {{ bind_host }}:{{ listen.listen_port }}
+
+    mode tcp
+    balance roundrobin
+    option httpchk GET /readyz HTTP/1.0
+{% for s in listen.backend_server_pool_members if s.enabled %}
+{%- set sh = '[' ~ s.host ~ ']' if ':' in s.host else s.host %}
+{%- set res = ' resolvers haproxy_dns init-addr none' if s.host is not ansible.utils.ip_address else '' %}
+{{- '    server ' ~ s.name ~ ' ' ~ sh ~ ':' ~ s.port ~ res ~ ' verify none check check-ssl inter 10s fall 2 rise 3' }}
+{% endfor %}

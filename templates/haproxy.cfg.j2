@@ -1,0 +1,70 @@
+global
+    log         /rsyslog-socket {{ ha_haproxy_syslog_facility }}
+
+    chroot      /var/lib/haproxy
+    pidfile     /run/haproxy.pid
+    maxconn     100000
+    user        haproxy
+    group       haproxy
+    daemon
+
+    # turn on stats unix socket
+    stats socket /var/lib/haproxy/stats
+
+{% if ansible_os_family == 'RedHat' %}
+
+    # utilize system-wide crypto-policies
+    ssl-default-bind-ciphers PROFILE=SYSTEM
+    ssl-default-server-ciphers PROFILE=SYSTEM
+
+{% elif ansible_os_family == 'Debian' %}
+
+        # Default SSL material locations
+        ca-base /etc/ssl/certs
+        crt-base /etc/ssl/private
+
+        # See: https://ssl-config.mozilla.org/#server=haproxy&server-version=2.0.3&config=intermediate
+        ssl-default-bind-ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384
+        ssl-default-bind-ciphersuites TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256
+        ssl-default-bind-options ssl-min-ver TLSv1.2 no-tls-tickets
+
+{% endif %}
+
+
+#---------------------------------------------------------------------
+# defaults for every 'listen' and 'backend' 
+#---------------------------------------------------------------------
+defaults
+    mode                    http
+    log                     global
+    option                  tcplog
+    option                  dontlognull
+    option                  http-server-close
+    option                  log-health-checks
+    option                  redispatch
+    retries                 3
+    timeout http-request    10s
+    timeout queue           1m
+    timeout connect         10s
+    timeout client          1m
+    timeout server          1m
+    timeout http-keep-alive 10s
+    timeout check           10s
+    maxconn                 100000
+
+resolvers haproxy_dns
+    parse-resolv-conf
+    # allow larger DNS payloads
+    accepted_payload_size 65000 
+
+listen stats
+    bind {{ ha_haproxy_stat_bind_address }}:{{ ha_haproxy_stat_port }}
+    mode http
+    stats enable
+    stats show-node
+    stats show-legends
+    stats uri {{ ha_haproxy_stat_uri }}
+{% if ha_haproxy_stat_password %}
+    stats auth {{ ha_haproxy_stat_user }}:{{ ha_haproxy_stat_password }}
+{% endif %}
+    stats refresh 10s

@@ -1,0 +1,6 @@
+---
+- name: Smoke-test the ha_haproxy role
+  hosts: localhost
+  remote_user: root
+  roles:
+    - ha_haproxy

@@ -1,0 +1,124 @@
+---
+# tasks file for ha_haproxy
+
+- name: Assert target os_family is supported
+  ansible.builtin.assert:
+    that: ansible_os_family in ha_haproxy_supported_os_families
+    fail_msg: "Unsupported os_family '{{ ansible_os_family }}'"
+    quiet: true
+  tags:
+    - always
+
+- name: Assert ha_haproxy_cfg provided
+  ansible.builtin.assert:
+    that: ha_haproxy_cfg is defined and (ha_haproxy_cfg | length) > 0
+    fail_msg: "ha_haproxy_cfg not provided or empty"
+  tags:
+    - always
+
+- name: Initialize derived HAProxy variables
+  ansible.builtin.set_fact:
+    ha_haproxy_listens: []
+    ha_haproxy_fw_ports:
+      - port: "{{ ha_haproxy_stat_port }}"
+        proto: tcp
+  tags:
+    - always
+
+- name: Build HAProxy listener entries
+  ansible.builtin.set_fact:
+    ha_haproxy_listens: >-
+      {{ ha_haproxy_listens + [
+        {'vip_context': item.0, 'listen': item.1}
+      ] }}
+  loop: "{{ query('ansible.builtin.subelements', ha_haproxy_cfg, 'haproxy_listen') }}"
+  tags:
+    - always
+
+- name: Build HAProxy firewall ports
+  ansible.builtin.set_fact:
+    ha_haproxy_fw_ports: >-
+      {{ ha_haproxy_fw_ports + [
+        {'port': item.listen.listen_port, 'proto': 'tcp'}
+      ] }}
+  loop: "{{ ha_haproxy_listens }}"
+  tags:
+    - always
+
+- name: Assert vrrp_password is valid
+  ansible.builtin.assert:
+    that:
+      - (item.vrrp_password | default('') | length) > 0
+      - (item.vrrp_password | default('') | length) <= 8
+    fail_msg: >-
+      Entry '{{ item.name }}': vrrp_password must contain
+      between 1 and 8 characters.
+  loop: "{{ ha_haproxy_cfg }}"
+  tags:
+    - keepalived_reconfig
+
+- name: Assert keepalived_primary_host is a group member
+  ansible.builtin.assert:
+    that: (item.keepalived_primary_host | default('')) in groups['g_ha_haproxy']
+    fail_msg: "entry '{{ item.name }}': primary host not in [g_ha_haproxy]"
+  loop: "{{ ha_haproxy_cfg }}"
+  tags:
+    - keepalived_reconfig
+
+- name: Assert use_template exists
+  ansible.builtin.assert:
+    that:
+      - item.listen.use_template is string
+      - (item.listen.use_template | basename) == item.listen.use_template
+      - >-
+        (query(
+          'ansible.builtin.fileglob',
+          role_path ~ '/templates/conf.d/' ~ item.listen.use_template
+        ) | length) == 1
+    fail_msg: >-
+      HAProxy listen block '{{ item.listen.name }}':
+      template '{{ item.listen.use_template }}' not found
+  loop: "{{ ha_haproxy_listens }}"
+  tags:
+    - haproxy_reconfig
+
+- name: Require authentication when HAProxy stats are exposed
+  ansible.builtin.assert:
+    that:
+      - >-
+        ha_haproxy_stat_bind_address == '127.0.0.1'
+        or (ha_haproxy_stat_password | length) > 0
+    fail_msg: >-
+      Set ha_haproxy_stat_password when the stats listener is not bound to 127.0.0.1.
+  tags:
+    - haproxy_reconfig
+
+- name: Install required packages
+  ansible.builtin.include_tasks: "pkg-install-{{ ansible_os_family }}.yml"
+
+- name: Configure firewall
+  ansible.builtin.include_tasks: "firewall-{{ ansible_os_family }}.yml"
+
+- name: Configure SELinux
+  ansible.builtin.include_tasks: selinux.yml
+  when:
+    - ansible_os_family == 'RedHat'
+    - ha_haproxy_selinux_enabled | bool
+
+- name: Configure keepalived
+  ansible.builtin.include_tasks:
+    file: keepalived.yml
+    apply:
+      tags:
+        - keepalived_reconfig
+  tags:
+    - keepalived_reconfig
+
+- name: Configure haproxy
+  ansible.builtin.include_tasks:
+    file: haproxy.yml
+    apply:
+      tags:
+        - haproxy_reconfig
+  tags:
+    - haproxy_reconfig
