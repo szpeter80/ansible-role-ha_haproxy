@@ -103,6 +103,10 @@ with the HAProxy listen blocks served from it.
         # empty (default) leaves the stats UI unauthenticated;
         # set it to enable HTTP Basic auth
         ha_haproxy_stat_password: "{{ my_lb_stats_pw }}"
+
+        # Bearer token for Service Account, when the API needs auth even for /readyz (e.g. k3s default)
+        ha_haproxy_lb_token: "{{ my_k3s_lb_token }}"
+
 ```
 
 Put a secret password to  `vault_pass.txt`, then create your vault
@@ -112,6 +116,46 @@ with `ansible-vault create --vault-pass-file ./vault_pass.txt vault.yml`
 my_lb_vip1_vrrp_pw: "secret1"
 my_lb_vip2_vrrp_pw: "secret2"
 my_lb_stats_pw: "secret3"
+my_k3s_lb_token: "secret4"
+```
+
+K3S notes: 
+    - bring up with plain kubernetes api template
+    - create the SA, get the token, update your vault
+    - change template to authed kubernetes api and re-run
+
+Example config for the Kubernetes SA:
+
+```yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ext-loadbalancers
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: external-lb-perms
+rules:
+  - nonResourceURLs:
+      - /readyz
+      - /livez
+    verbs:
+      - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: ext-loadbalancers--has--external-lb-perms
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: external-lb-perms
+subjects:
+  - kind: ServiceAccount
+    name: ext-loadbalancers
+    namespace: kube-system
 ```
 
 
